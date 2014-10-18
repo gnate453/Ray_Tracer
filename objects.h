@@ -4,6 +4,7 @@
 #ifndef INC_BOOST_VECTOR
 #define INC_BOOST_VECTOR 1
 #include <boost/numeric/ublas/vector.hpp>
+#include <boost/numeric/ublas/io.hpp>
 #endif  /*include boost vector*/
 
 #ifndef NAME_UBLAS_ALIAS
@@ -45,8 +46,8 @@ int recursionDepth();
 class Ray {
 
 Ray(ublas::vector<float>, ublas::vector<float>);
-void setPixel(ublas::vector<float>);
-void setPRP(ublas::vector<float>);
+//void setPixel(ublas::vector<float>);
+//void setPRP(ublas::vector<float>);
 ublas::vector<float> getPixel();
 ublas::vector<float> getPRP();
 ublas::vector<float> rayVector(); //v = L - E, L is pixel of view plane, E is PRP
@@ -57,4 +58,13 @@ ublas::vector<float> paraPos(float);// R(s) = L + sU,  L is pixel of view plane.
 
 };
 
+class Image {
+	
+Image(int, int);
+void setPixel(int,int,ublas::vector<float>);
+ublas::vector<float> getPixel(int,int);
+void clear();
+void clean();
+
+};
 #endif  /*define OBJS_H end */
