@@ -30,6 +30,7 @@ class Sphere {
 	std::string name;
 	ublas::vector<float> originWorldCoord;
 	ublas::vector<float> color;	
+	float radius;	
 
 	public:
 	Sphere(std::string, ublas::vector<float>, ublas::vector<float>, float); 
@@ -100,14 +101,18 @@ class Image {
 	private:
 	int width;
 	int height;
-	ublas::vector<float>** imgData;
+	ublas::vector<float>* imgColorData;
+	float* imgDepthData;
 	
 	public:
 	Image(int, int);
-	void setPixel(int,int,ublas::vector<float>);
-	ublas::vector<float> getPixel(int,int);
-	void clear();
-	void clean();
+	void initImageData();
+	void setPixelColor(int,int,ublas::vector<float>);
+	ublas::vector<float> getPixelColor(int,int);
+	void setPixelDepth(int,int,float);
+	float getPixelDepth(int,int);
+	void cleanImage();
+	void resetImage();
 	~Image();
 
 };
