@@ -6,17 +6,24 @@
 #include "pipe.h"
 #include "io.h"
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv) {		
 
-		
-	ublas::vector<float> v (3);
-	v(0) = 0;
-    v(1) = 3;
-	v(2) = -2;
+	ublas::vector<float> prp (3);
+	ublas::vector<float> pixel (3);
 
-	std::cout<<norm_2(v)<<std::endl;
-		
+	prp (0) = 0;
+	prp (1) = 0;
+	prp (2) = 0;
+	pixel (0) = 0;
+	pixel (1) = 3;
+	pixel (2) = -2;
 
+	Ray r(prp, pixel); 
+
+	std::cout<<r.getPixel()<<std::endl;
+	std::cout<<r.getPRP()<<std::endl;
+	std::cout<<r.unitVector()<<std::endl;
+	
 	return 0;
 }
 
