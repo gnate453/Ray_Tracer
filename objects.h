@@ -1,14 +1,12 @@
 #ifndef OBJS_H
 #define OBJS_H 1
 
-#ifndef INC_BOOST_VECTOR
-#define INC_BOOST_VECTOR 1
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/numeric/ublas/io.hpp>
-#endif  /*include boost vector*/
+#include <list>
 
 #ifndef NAME_UBLAS_ALIAS
-#define NAME_UBLAS_ALIAS
+#define NAME_UBLAS_ALIAS 1
 namespace ublas = boost::numeric::ublas;
 #endif /*namespace alias for boost uBLAS*/
 
@@ -95,6 +93,21 @@ class Ray {
 	ublas::vector<float> unitVectorScaled(float);		// sU	
 	ublas::vector<float> paraPos(float);// R(s) = L + sU,  L is pixel of view plane.
 
+};
+
+class World {
+	private:
+	std::list<Sphere> spheres;
+	std::list<Camera> cameras;
+	std::list<Scene> scenes;
+
+	public:
+	std::list<Sphere> getSpheres();
+	void addSphere(Sphere);
+	std::list<Camera> getCameras();
+	void addCamera(Camera);
+	std::list<Scene> getScenes();
+	void addScene(Scene);
 };
 
 class Image {

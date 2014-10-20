@@ -123,6 +123,30 @@ ublas::vector<float> Ray::unitVectorScaled(float s) {
 ublas::vector<float> Ray::paraPos(float s) {
 	return ( getPixel() + unitVectorScaled(s) );
 }
+
+std::list<Sphere> World::getSpheres() {
+	return spheres;
+}
+
+void World::addSphere(Sphere s) {
+	spheres.push_back(s);
+}
+
+std::list<Camera> World::getCameras() {
+	return cameras;
+}
+
+void World::addCamera(Camera c) {
+	cameras.push_back(c);
+}
+
+std::list<Scene> World::getScenes() {
+	return scenes;
+}
+
+void World::addScene(Scene s) {
+	scenes.push_back(s);
+}
 	
 Image::Image(int w, int h) 
 {
