@@ -22,6 +22,8 @@ namespace ublas = boost::numeric::ublas;
 #define GREEN 1
 #define BLUE 2
 #define ALPHA 3
+#define COLOR_MAX 255
+#define COLOR_VALUES 256
 
 class Sphere {
 	private:
@@ -29,13 +31,19 @@ class Sphere {
 	ublas::vector<float> originWorldCoord;
 	ublas::vector<float> color;	
 	float radius;	
+	float radiusSquared;
+	float disToPRPSquared;
 
 	public:
 	Sphere(std::string, ublas::vector<float>, ublas::vector<float>, float); 
+	void setRadiusSquared(float);
+	void setDistanceToPRPSquared(float);
 	std::string getName();
 	ublas::vector<float> getOrigin();
 	ublas::vector<float> getColor(); 
 	float getRadius();
+	float getRadiusSquared();
+	float getDistanceToPRPSquared();
 
 };
 
@@ -78,11 +86,17 @@ class Ray {
 	//world Coordinate of the Pixel this ray colors.
 	ublas::vector<float> pixelWorldCoord;
 	//world Coordinate of the PRP or foucas point.		
-	ublas::vector<float> focusWorldCoord;		
+	ublas::vector<float> focusWorldCoord;
+	int screenX;
+	int screenY;		
 
 	public:
-	Ray(ublas::vector<float>, ublas::vector<float>);
+	Ray(ublas::vector<float>);
 	
+	void setX(int);
+	int getX();
+	void setY(int);
+	int getY();
 	void setPixel(ublas::vector<float>);
 	ublas::vector<float> getPixel();
 	void setPRP(ublas::vector<float>);
@@ -112,16 +126,32 @@ class World {
 
 class Image {
 	private:
+	std::string name;
 	int width;
 	int height;
-	ublas::vector<float>* imgColorData;
+	float* imgColorRed;
+	float* imgColorGreen;
+	float* imgColorBlue;
 	float* imgDepthData;
 	
 	public:
-	Image(int, int);
+	Image(std::string, int, int);
+	Image(const Image& c);
+	Image operator=(Image rhs);
+	std::string getName() const;
+	int getWidth() const;
+	int getHeight() const;
 	void initImageData();
-	void setPixelColor(int,int,ublas::vector<float>);
-	ublas::vector<float> getPixelColor(int,int);
+	float getImgRedData() const;
+	float getImgGreenData() const;
+	float getImgBlueData() const;
+	float getImgDepthData() const;
+	void setPixelRed(int,int,float);
+	float getPixelRed(int,int);
+	void setPixelGreen(int,int,float);
+	float getPixelGreen(int,int);
+	void setPixelBlue(int,int,float);
+	float getPixelBlue(int,int);
 	void setPixelDepth(int,int,float);
 	float getPixelDepth(int,int);
 	void cleanImage();

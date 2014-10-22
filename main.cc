@@ -14,9 +14,11 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
-	std::string objs = readInputFiles(argv);
-	std::cout<<objs<<std::endl;
+	std::string data = readInputFiles(argv);
 	
+	World w = worldFromString(data);
+
+	intersecptRaysandSpheres(w);
 
 	return 0;
 }

@@ -13,4 +13,4 @@ $(TARGET): $(MAIN) $(INCLUDE)
 	$(CC) -o $@ $? $(FLAGS)
 
 clean:
-	rm -v *.o HW3
+	rm -v *.ppm *.o HW3
