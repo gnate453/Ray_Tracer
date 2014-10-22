@@ -191,37 +191,71 @@ Image::Image(const Image& c) {
 	name = c.getName();
 	width = c.getWidth();
 	height = c.getHeight();
-	imgColorRed = new float [width*height];
-	*imgColorRed = c.getImgRedData();
-	imgColorGreen = new float [width*height];
-	*imgColorGreen = c.getImgGreenData();
-	imgColorBlue = new float [width*height];
-	*imgColorBlue = c.getImgBlueData();
-	imgDepthData = new float [width*height];
-	*imgDepthData = c.getImgDepthData();
+	imgColorRed = new int [width*height];
+	for (int i =0; i < (width*height); ++i)
+	{
+		imgColorRed[i] = c.getImgRedData()[i];
+	}
+	imgColorGreen = new int [width*height];
+
+	for (int i =0; i < (width*height); ++i)
+	{
+		imgColorGreen[i] = c.getImgGreenData()[i];
+	}
+	
+	imgColorBlue = new int [width*height];
+
+	for (int i =0; i < (width*height); ++i)
+	{
+		imgColorBlue[i] = c.getImgBlueData()[i];
+	}
+	
+	imgDepthData = new int [width*height];
+	
+	for (int i =0; i < (width*height); ++i)
+	{
+		imgDepthData[i] = c.getImgDepthData()[i];
+	}
 }
 
 Image Image::operator=(Image rhs) {
 	name = rhs.getName();
 	width = rhs.getWidth();
 	height = rhs.getHeight();
-	imgColorRed = new float [width*height];
-	*imgColorRed = rhs.getImgRedData();
-	imgColorGreen = new float [width*height];
-	*imgColorGreen = rhs.getImgGreenData();
-	imgColorBlue = new float [width*height];
-	*imgColorBlue = rhs.getImgBlueData();
-	imgDepthData = new float[width*height];
-	*imgDepthData = rhs.getImgDepthData();
+	imgColorRed = new int [width*height];
+	for (int i =0; i < (width*height); ++i)
+	{
+		imgColorRed[i] = rhs.getImgRedData()[i];
+	}
+	imgColorGreen = new int [width*height];
+
+	for (int i =0; i < (width*height); ++i)
+	{
+		imgColorGreen[i] = rhs.getImgGreenData()[i];
+	}
+	
+	imgColorBlue = new int [width*height];
+
+	for (int i =0; i < (width*height); ++i)
+	{
+		imgColorBlue[i] = rhs.getImgBlueData()[i];
+	}
+	
+	imgDepthData = new int [width*height];
+	
+	for (int i =0; i < (width*height); ++i)
+	{
+		imgDepthData[i] = rhs.getImgDepthData()[i];
+	}
 
 	return *this; 
 }
 
 void Image::initImageData() {
-	imgColorRed = new float [width*height];
-	imgColorGreen = new float [width*height];
-	imgColorBlue = new float [width*height];
-	imgDepthData = new float [width*height];	
+	imgColorRed = new int [width*height];
+	imgColorGreen = new int [width*height];
+	imgColorBlue = new int [width*height];
+	imgDepthData = new int [width*height];	
 }
 
 std::string Image::getName() const {
@@ -236,52 +270,52 @@ int Image::getHeight() const {
 	return height;
 }
 
-float Image::getImgRedData() const {
-	return *imgColorRed;
+int* Image::getImgRedData() const {
+	return imgColorRed;
 }
 
-float Image::getImgGreenData() const {
-	return *imgColorGreen;
+int* Image::getImgGreenData() const {
+	return imgColorGreen;
 }
 
-float Image::getImgBlueData() const {
-	return *imgColorBlue;
+int* Image::getImgBlueData() const {
+	return imgColorBlue;
 }
 
-float Image::getImgDepthData() const {
-	return *imgDepthData;
+int* Image::getImgDepthData() const {
+	return imgDepthData;
 }
 
-void Image::setPixelRed(int x, int y, float p) {	
+void Image::setPixelRed(int x, int y, int p) {	
 	imgColorRed[ (y*width) + x ] = p;
 }
 
-void Image::setPixelGreen(int x, int y, float p) {	
+void Image::setPixelGreen(int x, int y, int p) {	
 	imgColorGreen[ (y*width) + x ] = p;
 }
 
-void Image::setPixelBlue(int x, int y, float p) {	
+void Image::setPixelBlue(int x, int y, int p) {	
 	imgColorBlue[ (y*width) + x ] = p;
 }
 
-float Image::getPixelRed(int x,int y) {
+int Image::getPixelRed(int x,int y) {
 	return imgColorRed[ (y*width)+ x ];
 }
 
-float Image::getPixelGreen(int x,int y) {
+int Image::getPixelGreen(int x,int y) {
 	return imgColorGreen[ (y*width)+ x ];
 }
 
-float Image::getPixelBlue(int x,int y) {
+int Image::getPixelBlue(int x,int y) {
 	return imgColorBlue[ (y*width)+ x ];
 }
 
 
-void Image::setPixelDepth(int x, int y, float d) {
+void Image::setPixelDepth(int x, int y, int d) {
 	imgDepthData[ (y*width) + x ] = d;
 }
 
-float Image::getPixelDepth(int x,int y) {
+int Image::getPixelDepth(int x,int y) {
 	return imgDepthData[ (y*width) + x ];
 }
 void Image::cleanImage() {

@@ -129,10 +129,10 @@ class Image {
 	std::string name;
 	int width;
 	int height;
-	float* imgColorRed;
-	float* imgColorGreen;
-	float* imgColorBlue;
-	float* imgDepthData;
+	int* imgColorRed;
+	int* imgColorGreen;
+	int* imgColorBlue;
+	int* imgDepthData;
 	
 	public:
 	Image(std::string, int, int);
@@ -142,18 +142,18 @@ class Image {
 	int getWidth() const;
 	int getHeight() const;
 	void initImageData();
-	float getImgRedData() const;
-	float getImgGreenData() const;
-	float getImgBlueData() const;
-	float getImgDepthData() const;
-	void setPixelRed(int,int,float);
-	float getPixelRed(int,int);
-	void setPixelGreen(int,int,float);
-	float getPixelGreen(int,int);
-	void setPixelBlue(int,int,float);
-	float getPixelBlue(int,int);
-	void setPixelDepth(int,int,float);
-	float getPixelDepth(int,int);
+	int* getImgRedData() const;
+	int* getImgGreenData() const;
+	int* getImgBlueData() const;
+	int* getImgDepthData() const;
+	void setPixelRed(int,int,int);
+	int getPixelRed(int,int);
+	void setPixelGreen(int,int,int);
+	int getPixelGreen(int,int);
+	void setPixelBlue(int,int,int);
+	int getPixelBlue(int,int);
+	void setPixelDepth(int,int,int);
+	int getPixelDepth(int,int);
 	void cleanImage();
 	void resetImage();
 	~Image();
