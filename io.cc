@@ -34,7 +34,7 @@ void outputImages(std::list<Image> imgs) {
 		std::ofstream colorOut(nameC.c_str(), std::ofstream::out );
 		std::ofstream depthOut(nameD.c_str(), std::ofstream::out );
 		
-		std::cout<<w<<" "<<h<<std::endl;
+		//std::cout<<w<<" "<<h<<std::endl;
 
 		colorOut<<"P3 "<<w<<" "<<h<<" "<<(COLOR_MAX+1)<<std::endl;
 		depthOut<<"P3 "<<w<<" "<<h<<" "<<(COLOR_MAX+1)<<std::endl;

@@ -24,6 +24,7 @@ namespace ublas = boost::numeric::ublas;
 #define ALPHA 3
 #define COLOR_MAX 255
 #define COLOR_VALUES 256
+#define ZERO 0
 
 class Sphere {
 	private:
@@ -138,6 +139,7 @@ class Image {
 	Image(std::string, int, int);
 	Image(const Image& c);
 	Image operator=(Image rhs);
+	void initPixelsWithData();
 	std::string getName() const;
 	int getWidth() const;
 	int getHeight() const;

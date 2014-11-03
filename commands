@@ -1,2 +1,3 @@
 c camera1 0 0 0 0 0 1 4 8
-r scene01 256 256 1
+c camera2 0 0 0 0 0 1 3 10
+r scene01 512 512 1

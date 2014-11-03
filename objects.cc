@@ -185,6 +185,7 @@ Image::Image(std::string n, int w, int h)
 	width = w;
 	height = h;
 	initImageData();
+	initPixelsWithData();
 }
 
 Image::Image(const Image& c) {
@@ -256,6 +257,18 @@ void Image::initImageData() {
 	imgColorGreen = new int [width*height];
 	imgColorBlue = new int [width*height];
 	imgDepthData = new int [width*height];	
+}
+
+void Image::initPixelsWithData() {
+
+	for (int i =0; i < (width*height); ++i)
+	{
+		imgColorRed[i] = COLOR_MAX;
+		imgColorGreen[i] = COLOR_MAX;
+		imgColorBlue[i] = COLOR_MAX;
+		imgDepthData[i] = ZERO;
+	}
+
 }
 
 std::string Image::getName() const {
