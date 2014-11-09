@@ -24,6 +24,7 @@ namespace ublas = boost::numeric::ublas;
 #define ALPHA 3
 #define COLOR_MAX 255
 #define COLOR_VALUES 256
+#define AMB_LIGHT 10.0
 #define ZERO 0
 
 class Sphere {

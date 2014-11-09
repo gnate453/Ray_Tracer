@@ -263,9 +263,9 @@ void Image::initPixelsWithData() {
 
 	for (int i =0; i < (width*height); ++i)
 	{
-		imgColorRed[i] = COLOR_MAX;
-		imgColorGreen[i] = COLOR_MAX;
-		imgColorBlue[i] = COLOR_MAX;
+		imgColorRed[i] = ZERO;
+		imgColorGreen[i] = ZERO;
+		imgColorBlue[i] = ZERO;
 		imgDepthData[i] = ZERO;
 	}
 

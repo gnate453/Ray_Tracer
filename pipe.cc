@@ -25,6 +25,7 @@ World worldFromString(std::string data) {
 			l>>c (GREEN);
 			l>>c (BLUE);
 			c (ALPHA) = 0;
+			//std::cout<<name<<" "<<w<<" "<<c<<" "<<r<<std::endl;
 			Sphere sphere(name, w, c, r);
 			newWorld.addSphere(sphere);
 		}
@@ -69,7 +70,6 @@ void intersecptRaysandSpheres(World w) {
 	std::list<Camera> cameras = w.getCameras();
 	std::list<Scene> scenes = w.getScenes();
 	std::list<Image> imgs;
-	float ambient = 15;
 	float rsqd, csqd;
 
 	for (std::list<Scene>::iterator sit = scenes.begin();
@@ -79,12 +79,12 @@ void intersecptRaysandSpheres(World w) {
 				cit != cameras.end(); ++cit)
 		{	
 			std::list<Ray> rays;
-			Ray tmpR(cit->getPRP()) ;
 			for (int i = 0; i < sit->getHeight(); ++i)
 			{
 				float y = (2.0/(sit->getHeight()-1))*i - 1 ;
 				for (int j = 0; j < sit->getWidth(); ++j)
 				{
+					Ray tmpR(cit->getPRP()) ;
 					float x = (2.0/(sit->getWidth()-1))*j - 1;
 					tmpR.setX(j);
 					tmpR.setY(i);
@@ -107,9 +107,6 @@ void intersecptRaysandSpheres(World w) {
 				//radius squared
 				rsqd = (oit->getRadius()*oit->getRadius());
 				oit->setRadiusSquared(rsqd);
-				//c squared (sphere origin -camera prp)
-				csqd = inner_prod( (oit->getOrigin() - cit->getPRP()), (oit->getOrigin() - cit->getPRP()));
-				oit->setDistanceToPRPSquared(csqd);
 
 				//std::cout<<oit->getName()<<" rsqd: "<<rsqd<<" "<<"csqd: "<<csqd<<std::endl;	
 			}//end for each sphere
@@ -125,46 +122,61 @@ void intersecptRaysandSpheres(World w) {
 				int pb = 0;
 				for (std::list<Sphere>::iterator oit = spheres.begin(); oit != spheres.end(); ++oit)
 				{
-					float v = inner_prod((oit->getOrigin() - rit->getPRP()), U);
-					//std::cout<<" r^2: "<<oit->getRadiusSquared()<<" c^2: "<<oit->getDistanceToPRPSquared()<<" v^2: "<<v*v;
-					if (oit->getRadiusSquared() > ( oit->getDistanceToPRPSquared() - (v * v) ))
+					float v, dsqd;
+					//c squared (sphere origin -camera prp)
+					if (rit->getPixel() (Z) > oit->getOrigin() (Z)) {
+						csqd = norm_2(oit->getOrigin() - rit->getPixel()) *  norm_2(oit->getOrigin() - rit->getPixel());
+					 	v = inner_prod(oit->getOrigin() - rit->getPixel(), U);
+						dsqd = oit->getRadiusSquared() - ( oit->getDistanceToPRPSquared() - (v * v) );
+                    }
+					else {
+						csqd = norm_2(rit->getPixel() - oit->getOrigin()) *  norm_2(rit->getPixel() - oit->getOrigin());
+						v = inner_prod(rit->getPixel() - oit->getOrigin(), U);
+						dsqd = ( oit->getDistanceToPRPSquared() + (v * v) ) - oit->getRadiusSquared();
+					}
+					oit->setDistanceToPRPSquared(csqd);
+					//std::cout<<" r^2: "<<oit->getRadiusSquared()<<" c^2: "<<oit->getDistanceToPRPSquared()<<" v^2: "<<v*v<<std::endl;
+					if (dsqd >= 0)
 					{
-						float dsqd = oit->getRadiusSquared() - ( oit->getDistanceToPRPSquared() - (v * v) );
 						float d = std::sqrt(dsqd);
 						//std::cout<<"  dsqd: "<<dsqd<<" d: "<<d;
-						if (dsqd >= 0 )
-						{
-							//normal to sphere
-							ublas::vector<float> Q = rit->paraPos(v-d);
-							float k = inner_prod(rit->unitVector() , Q);
+						//normal to sphere
+						ublas::vector<float> S = rit->paraPos(v-d);
+						if ( S(Z) < -cit->getNearClip()  && S(Z) > -cit->getFarClip()) { 
+							//std::cout<<"Object: "<<oit->getName()<<" S(Z): "<<S(Z)<<std::endl;
+							//std::cout<<"near: "<<-cit->getNearClip()<<" far: "<<-cit->getFarClip()<<std::endl;
+							ublas::vector<float> N = S - oit->getOrigin();
+							N = (1/norm_2(N)) * N; 
+						
+							float k = inner_prod(rit->unitVector() , N);
 							//std::cout<<"  Q: "<<Q<<" k: "<<k<<std::endl;
-							
-							int r = (int) floor(oit->getColor() (RED) * std::abs(k) + ambient);
+						
+							int r = (int) floor(oit->getColor() (RED) * std::abs(k) + AMB_LIGHT);
 							if (r < COLOR_MAX)
 								pr = r;
 							else 
 								pr = COLOR_MAX;
 
-							int g =  (int) floor(oit->getColor() (GREEN) * std::abs(k) + ambient);
+							int g =  (int) floor(oit->getColor() (GREEN) * std::abs(k) + AMB_LIGHT);
 							if (g < COLOR_MAX)
 								pg = g;
 							else 
 								pg = COLOR_MAX;
-							
-							int b = (int) floor(oit->getColor() (BLUE) * std::abs(k) + ambient);
+						
+							int b = (int) floor(oit->getColor() (BLUE) * std::abs(k) + AMB_LIGHT);
 							if (b < COLOR_MAX)
 								pb = b;
 							else 
 								pb = COLOR_MAX;
-							
-							ublas::vector<float> fc = rit->getPixel();
+						
+							ublas::vector<float> fc = rit->getPixel();	
 							fc (Z) = -cit->getFarClip();
-							float disN = norm_2(Q - rit->getPixel());
-							float disF = norm_2(fc - Q);
+							float disN = norm_2(S - rit->getPixel());
+							float disF = norm_2(fc - S);
 								
-							int pdepth = (int)  COLOR_MAX - std::min( float (COLOR_MAX), 
+							int pdepth = (int)  COLOR_MAX - std::min( float (COLOR_MAX), (COLOR_MAX)*
 								(disN/(cit->getFarClip()-cit->getNearClip())));	
-							
+						
 							img.setPixelRed(rit->getX(), rit->getY(), pr);
 							img.setPixelGreen(rit->getX(), rit->getY(), pg);
 							img.setPixelBlue(rit->getX(), rit->getY(), pb);
@@ -172,26 +184,9 @@ void intersecptRaysandSpheres(World w) {
 							//std::cout<<rit->getX()<<","<<rit->getY()<<": "<<v<<" r^2:"<<oit->getRadiusSquared()
 							//			<<" c^2:"<<oit->getDistanceToPRPSquared()<<" d:"<<d<<" "
 							//			<<pr<<","<<pb<<","<<pg<<std::endl;
-							
-						}
-						else
-						{	
-							//img.setPixelRed(rit->getX(), rit->getY(), RED);
-							//img.setPixelGreen(rit->getX(), rit->getY(), RED);
-							//img.setPixelBlue(rit->getX(), rit->getY(), RED);	
-							//img.setPixelDepth(rit->getX(), rit->getY(), COLOR_MAX);
-						}
-					}
-					else
-					{	
-					
-						//img.setPixelRed(rit->getX(), rit->getY(), RED);
-						//img.setPixelGreen(rit->getX(), rit->getY(), RED);
-						//img.setPixelBlue(rit->getX(), rit->getY(), RED);	
-						//img.setPixelDepth(rit->getX(), rit->getY(), COLOR_MAX);
-					}
+						}		
+					}		
 				}//end for each object/sphere
-					
 			}//end for each ray
 			imgs.push_back(img);
 
