@@ -3,35 +3,66 @@
 World worldFromString(std::string data) {
 	
 	World newWorld;
-	std::stringstream d(data);
-	std::string line, entry, name;
+	std::string tmp, name;
+	char tmp2;
+	//TODO: create Material class cmtl stores the current material updated each time a matial is found 			in world string.  this material object is passed to objects constructed.  
+	Material cmtl;
 	
-	while (std::getline(d, line))
+	while (std::getline(data, tmp))
 	{
-		std::stringstream l(line);
-		std::getline(l, entry, ' ');
-
-		if (entry.compare("s") == 0)
-		{
-			std::getline(l, name, ' ');
+		//vertex
+		if (*(tmp.begin()) == 'v') {
+			std::stringstream parse(tmp.substr(TOSS_F, tmp.length());
+			//TODO: add a list of vectors to the World Class.
+			//TODO: add newly constructed vector to the list in World object.
+		}
+		//face
+		else if (*(tmp.begin()) == 'f') {
+			std::stringstream parse(tmp.substr(TOSS_F, tmp.length());
+			//TODO: parse and construct face.
+			//add face to the current polygon object.
+		}
+		//group
+		else if (*(tmp.begin()) == 'g') {
+			std::stringstream parse(tmp.substr(TOSS_F, tmp.length());
+			//TODO: group works like material.
+			//TODO: create new Polygon class.
+			//construct 'current' a polygon object.
+		}
+		//sphere
+		else if (*(tmp.begin()) == 's') {
+			std::stringstream parse(tmp.substr(TOSS_F, tmp.length());
 			ublas::vector<float> w (VECTOR_3D);
-			l>>w (X);
-			l>>w (Y);
-			l>>w (Z);
+			parse>>w (X);
+			parse>>w (Y);
+			parse>>w (Z);
 			float r;
-			l>>r;
-			ublas::vector<float> c (VECTOR_C);
-			l>>c (RED);
-			l>>c (GREEN);
-			l>>c (BLUE);
-			c (ALPHA) = 0;
+			parse>>r;
 			//std::cout<<name<<" "<<w<<" "<<c<<" "<<r<<std::endl;
-			Sphere sphere(name, w, c, r);
+			//TODO: change sphere to have material instead of color.
+			Sphere sphere(name, w, cmtl, r);
 			newWorld.addSphere(sphere);
 		}
-		else if (entry.compare("c") == 0)
-		{
-			std::getline(l, name, ' ');
+		//new material
+		else if (*(tmp.begin()) == 'n') { 
+			std::stringstream parse(tmp.substr(TOSS_S, tmp.length());
+			//TODO: add a list of materials to the World Class.
+			//TODO: add newly constructed material object to the list in world object.
+		}
+		//use material
+		else if (*(tmp.begin()) == 'u') {	
+			std::stringstream parse(tmp.substr(TOSS_S, tmp.length());
+			//TODO: get values to initialize a material
+			//set cmtl to newly constructed material.
+			//TODO:: important material will likely need a copy constructor and = operator.
+			//since this object will be passed to objects then cmtl will be destroyed at the end of thi				s function.
+			//not to mention the reference to cmtl may point to a different object at different times.
+			//TODO: alternatively create a list of materials and push back new materials.  
+		}
+		//camera
+		else if (*(tmp.begin()) == 'c')
+		{	
+			std::stringstream parse(tmp.substr(TOSS_F, tmp.length());
 			ublas::vector<float> prp (VECTOR_3D);
 			l>>prp (X);
 			l>>prp (Y);
@@ -45,19 +76,29 @@ World worldFromString(std::string data) {
 			l>>far;
 			//put the vpn at z= -near;
 			vpn (Z) = -near; 
+			//TODO: add new camera information to Camera Class.
+			//TODO: parse new camera information.  Construct camera object appropriately.
 			Camera camera(name, prp, vpn, near, far);
 			newWorld.addCamera(camera);
 	
 		}
+		//scene
 		else if (entry.compare("r") == 0)
-		{
-			getline(l, name, ' ');
+		{	
+			//TODO: DOUBLE CHECK this is still all that is needed for a scene.
+			std::stringstream parse(tmp.substr(TOSS_F, tmp.length());
 			int width, height, depth;
 			l>>width;
 			l>>height;
 			l>>depth;
 			Scene scene(name, width, height, depth);
 			newWorld.addScene(scene);
+		}
+		else if (entry.compare("l") == 0)
+		{	
+			std::stringstream parse(tmp.substr(TOSS_F, tmp.length());
+			//TODO: create new LightSouce Class.
+			//TODO: parse and construct light object.
 		}
 	}
 

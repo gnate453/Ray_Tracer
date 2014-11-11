@@ -2,23 +2,57 @@
 
 std::string readInputFiles(char** argv) {
 
-	std::ifstream objIn(argv[1]);
-	std::ifstream cmdIn(argv[2]);
+	std::string tmp, mtlFileName, objFileName, materials, vertices, objects, commands, world;
 
-	std::string objSTR;
-	std::string tmp;
-
-	while (std::getline(objIn, tmp))
-	{
-		objSTR += tmp + "\n";
-	}
-
-	while (std::getline(cmdIn, tmp))
-	{
-		objSTR += tmp + "\n";
-	}
+	//open the object file for reading.
+	objFileName = argv[1];
+	std::ifstream objFile(objFileName);
 	
-	return objSTR;
+	//get the material file name.
+	std::getline(objFile, tmp);
+	mtlFileName = objFileName.substr(0, objFileName.find_last_of("\\/");
+	mtlFileName = mtlFileName + tmp;
+
+	//get the rest of the object file.
+	while (std::getline(objFile, tmp))
+	{
+		if (*(tmp.begin()) == 'v')
+			vertices += tmp + "\n";
+		else if (*(tmp.begin()) == 'f')
+			objects += tmp + "\n";
+		else if (*(tmp.begin()) == 'g')
+			objects += tmp + "\n";
+		else if (*(tmp.begin()) == 's')
+			objects += tmp + "\n";
+		else if (*(tmp.begin()) == 'u')
+			objects += tmp + "\n";
+	}
+	objFile.close();
+	
+
+	//open the material file for reading.
+	std::ifstream mtlFile(mtlFileName);
+
+	//get lines from materials file.
+	while (std::getline(mtlFile, tmp))
+	{
+		materials += tmp + "\n";
+	}
+	mtlFile.close();
+
+	//open the command file for reading.
+	std::ifstream commFile(argv[2]);
+
+	//get lines from command file.
+	while (std::getline(commFile, tmp))
+	{
+		commands += tmp + "\n";
+	}
+	commFile.close();
+	
+	world = vertices + materials + objects + commands;
+
+	return world;
 }
 
 void outputImages(std::list<Image> imgs) {
