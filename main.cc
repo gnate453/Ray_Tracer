@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
 	
 	World w = worldFromString(data);
 
-	intersecptRaysandSpheres(w);
+	castRays(w);
 
 	return 0;
 }

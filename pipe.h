@@ -8,6 +8,7 @@
 #include "io.h"
 
 World worldFromString(std::string);
-void intersecptRaysandSpheres(World w);
+void castRays(World w);
+void intersectRayWithObjects(Ray, std::list<Sphere>, Camera, Image &);
 
 #endif /* PIPE_H */

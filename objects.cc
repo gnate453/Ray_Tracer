@@ -132,7 +132,7 @@ ublas::vector<float> Ray::getPRP() {
 	
 //v = L - E, L is pixel of view plane, E is PRP
 ublas::vector<float> Ray::rayVector() {
-	return getPixel()-getPRP(); 
+	return getPixel() - getPRP(); 
 } 	
 	
 // ||v|| = sqrt( (v1)^2 + (v2)^2 +...+(vn)^2 )
