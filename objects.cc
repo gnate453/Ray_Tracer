@@ -93,32 +93,33 @@ bool Face::isOnFace(ublas::vector<float> p) {
 		return false;	
 }
 
-Sphere::Sphere(std::string n, ublas::vector<float> o,
-				ublas::vector<float> c, float r){
-	name = n;
-	originWorldCoord = o;
-	color = c;
-	radius = r;
-} 
-
-void Sphere::setRadiusSquared(float i) {
-	radiusSquared = i;
+Object::Object(const std::string& n, const Material& mtl) {
+	
 }
 
-void Sphere::setDistanceToPRPSquared(float i) {
-	disToPRPSquared = i;
-}
-
-std::string Sphere::getName(){
+std::string Object::getName(){
 	return name;
 }
 
-ublas::vector<float> Sphere::getOrigin(){
-	return originWorldCoord;
+ublas::vector<float> Object::getColor(){
+	return color;
 }
 
-ublas::vector<float> Sphere::getColor(){
-	return color;
+void Object::setDistanceToPRPSquared(float i) {
+	disToPRPSquared = i;
+}
+
+float Object::getDistanceToPRPSquared() {
+	return disToPRPSquared;
+}
+
+Sphere::Sphere(const std::string& n, const Material& mtl, const ublas::vector<float>& o,const float &r) : Object(n, mtl) {
+	originWorldCoord = o;
+	radius = r;
+} 
+
+ublas::vector<float> Sphere::getOrigin(){
+	return originWorldCoord;
 }
 
 float Sphere::getRadius() {
@@ -126,11 +127,114 @@ float Sphere::getRadius() {
 }
 
 float Sphere::getRadiusSquared() {
-	return radiusSquared;
+	return radius * radius;
 }
 
-float Sphere::getDistanceToPRPSquared() {
-	return disToPRPSquared;
+Polygon::Polygon(const std::string& n, const Material& mtl, std::list<faces> f) : Object(n, mtl) {
+	faces = f;
+}
+
+std::list<Face> getFaces() {
+	return faces;
+}
+
+int getFaceCount() {
+	return faces.size();
+}
+
+Light::Light( ublas::vector<float> dir, ublas vector<float> l) {
+	directionVector = dir;
+	color = l; 
+}
+
+ublas::vector<float> Light::getDirectionVector() {
+	return directionVector;
+}
+
+ublas::vector<float> Light::getUnitVector() {
+	return (1/norm()) * directionVector();
+}
+
+float Light::norm() {
+	return norm_2(directionVector);
+}
+
+ublas::vector<float> Light::getColor() {
+	return color();
+}
+
+float Light::getRed() {
+	color(RED);
+}
+
+float Light::getGreen() {
+	color(GREEN);
+}
+
+float Light::getBlue() {
+	color(BLUE);
+}
+
+Ray::Ray(ublas::vector<float> prp) {
+	focusWorldCoord = prp;
+}
+
+void Ray::setScreenX(int x) {
+	screenX = x;
+}
+
+int Ray::getScreenX() {
+	return screenX;
+}
+
+void Ray::setScreenY(int y) {
+	screenY = y;
+}
+
+int Ray::getScreenY() {
+	return screenY;
+}
+
+//TODO: this should take different params see comment in header.
+void Ray::setPixelWorldCoord(ublas::vector<float> l) {
+	pixelWorldCoord = l;
+}
+
+ublas::vector<float> Ray::getPixelWorldCoord() {
+	return pixelWorldCoord;
+}
+
+void Ray::setPRP(ublas::vector<float> prp) {
+	focusWorldCoord = prp;
+}
+
+ublas::vector<float> Ray::getPRP() {
+	return focusWorldCoord;			
+}
+
+//v = L - E, L is pixel of view plane, E is PRP
+ublas::vector<float> Ray::rayVector() {
+	return getPixel() - getPRP(); 
+} 	
+
+// ||v|| = sqrt( (v1)^2 + (v2)^2 +...+(vn)^2 )
+float Ray::norm() {
+	return norm_2(rayVector());
+}
+
+// U = (v/||v||)
+ublas::vector<float> Ray::unitVector() {
+	return ( (1/norm()) * rayVector() );
+}		
+
+//sU	
+ublas::vector<float> Ray::unitVectorScaled(float s) {
+	return (s * unitVector());
+}	
+	
+// R(s) = L + sU,  L is pixel of view plane.
+ublas::vector<float> Ray::paraPos(float s) {
+	return ( getPixel() + unitVectorScaled(s) );
 }
 
 Camera::Camera(std::string n, ublas::vector<float> prp,
@@ -183,93 +287,6 @@ int Scene::getHeight(){
 
 int Scene::getRecursionDepth() {
 	return recursionDepth;
-}
-
-
-Ray::Ray(ublas::vector<float> prp) {
-	focusWorldCoord = prp;
-}
-
-void Ray::setX(int x) {
-	screenX = x;
-}
-
-int Ray::getX() {
-	return screenX;
-}
-
-void Ray::setY(int y) {
-	screenY = y;
-}
-
-int Ray::getY() {
-	return screenY;
-}
-
-void Ray::setPixel(ublas::vector<float> l) {
-	pixelWorldCoord = l;
-}
-
-ublas::vector<float> Ray::getPixel() {
-	return pixelWorldCoord;
-}
-
-void Ray::setPRP(ublas::vector<float> prp) {
-	focusWorldCoord = prp;
-}
-
-ublas::vector<float> Ray::getPRP() {
-	return focusWorldCoord;			
-}
-	
-	
-//v = L - E, L is pixel of view plane, E is PRP
-ublas::vector<float> Ray::rayVector() {
-	return getPixel() - getPRP(); 
-} 	
-	
-// ||v|| = sqrt( (v1)^2 + (v2)^2 +...+(vn)^2 )
-float Ray::norm() {
-	return norm_2(rayVector());
-}
-	
-// U = (v/||v||)
-ublas::vector<float> Ray::unitVector() {
-	return ( (1/norm()) * rayVector() );
-}		
-
-//sU	
-ublas::vector<float> Ray::unitVectorScaled(float s) {
-	return (s * unitVector());
-}	
-	
-// R(s) = L + sU,  L is pixel of view plane.
-ublas::vector<float> Ray::paraPos(float s) {
-	return ( getPixel() + unitVectorScaled(s) );
-}
-
-std::list<Sphere> World::getSpheres() {
-	return spheres;
-}
-
-void World::addSphere(Sphere s) {
-	spheres.push_back(s);
-}
-
-std::list<Camera> World::getCameras() {
-	return cameras;
-}
-
-void World::addCamera(Camera c) {
-	cameras.push_back(c);
-}
-
-std::list<Scene> World::getScenes() {
-	return scenes;
-}
-
-void World::addScene(Scene s) {
-	scenes.push_back(s);
 }
 	
 Image::Image(std::string n, int w, int h) 
@@ -439,3 +456,41 @@ void Image::resetImage() {
 Image::~Image() {
 	cleanImage();
 }
+
+std::list<Camera> World::getCameras() {
+	return cameras;
+}
+
+void World::addCamera(Camera c) {
+	cameras.push_back(c);
+}
+
+std::list<Scene> World::getScenes() {
+	return scenes;
+}
+
+void World::addScene(Scene s) {
+	scenes.push_back(s);
+}
+
+std::list<Object> World::getObjects() {
+	return objects;
+}
+
+void World::addObject(Object o) {
+	objects.push_back(o);
+}
+
+std::map<ublas::vector<float>> World::getVetices() {
+	return verticies;
+}
+
+void World::addVertex(ublas::vector<float> v) {
+	vertices [vertices.size()] = v;
+
+std::map<ublas::vector<float>> World::getMaterials() {
+	return materials;
+}
+
+void World::addMaterial(Material mtl) {
+	materials [materials.size()] =  mtl;

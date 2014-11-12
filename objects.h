@@ -4,6 +4,7 @@
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/numeric/ublas/io.hpp>
 #include <list>
+#include <list>
 
 #ifndef NAME_UBLAS_ALIAS
 #define NAME_UBLAS_ALIAS 1
@@ -75,9 +76,9 @@ class Object {
 	
 	public:
 	Object(std::string, Material);	
-	void setDistanceToPRPSquared(float);
 	std::string getName();
 	Material getColor(); 
+	void setDistanceToPRPSquared(float);
 	float getDistanceToPRPSquared();
 };
 
@@ -227,8 +228,8 @@ class World {
 	std::list<Camera> cameras;
 	std::list<Scene> scenes;
 	std::list<Object> objects;
-	std::list<ublas::vector<float>> vertices;
-	std::list<Material> materials;
+	std::map<size_type, ublas::vector<float>> vertices;
+	std::list<size_type, Material> materials;
 
 	public:
 	std::list<Camera> getCameras();
@@ -237,11 +238,9 @@ class World {
 	void addScene(Scene);
 	std::list<Object> getObjects();
 	void addObject(Object);
-	ublas::vector<float> getVertex(int);
-	std::list<ublas::vector<float>> getVertices();
+	std::map<size_type, <ublas::vector<float>> getVertices();
 	void addVertex(ublas::vector<float>);
-	Material getMaterial(int);
-	std::list<Material> getMaterials();
+	std::map<size_type, Material> getMaterials();
 	void addMaterial(Material);
 };
 
