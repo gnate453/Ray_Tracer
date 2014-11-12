@@ -1,5 +1,98 @@
 #include "objects.h"
 
+
+Material::Material(const &ublas::vector<float> c) {
+	ka = c;
+	kd = c;
+	ks = c;
+}
+
+Material::Material(const ublas::vector<float>& a, const ublas::vector<float>& d, const ublas::vector<float>& s) {
+	ka = a;
+	kd = d;
+	ks = s;
+}
+
+ublas::vector<float> Material::getAmbientProperties() {
+	return ka;
+}
+
+float Material::getAmbientRed() {
+	return ka(RED);
+}
+
+float Material::getAmbientGreen() {
+	reutn ka(GREEN);
+}
+
+float Material::getAmbientBlue() {
+	return ka(BLUE);
+}
+
+ublas::vector<float> Material::getDiffuseProperties() {
+	return kd;
+}
+
+float Material::getDiffuseRed() {
+	return kd(RED);
+}
+
+float Material::getDiffuseGreen() {
+	return kd(GREEN);
+}
+
+float Material::getDiffuseBlue() {
+	return kd(BLUE);
+}
+
+ublas::vector<float> Material::getSpecularProperties() {
+	return ks;
+}
+
+float Material::getSpecularRed() {
+	return ks(RED);
+}
+
+float Material::getSpecularGreen() {
+	return ks(GREEN);
+}
+
+float Material::getSpecularBlue() {
+	return ks(BLUE);
+}
+
+Face::Face(const ublas::vector<float>& v1, 
+			const ublas::vector<float>& v2, 
+			const ublas::vector<float>& v3) {
+	p1 = v1;
+	p2 = v2;
+	p3 = v3;
+}
+
+ublas::vector<float> Face::getVertex(int i) {
+	switch (i) {
+	case P_ONE :
+		return p1;
+	case P_TWO :
+		return p2;
+	case P_THREE :
+		return p3;	
+}
+	
+ublas::vector<float> Face::getNormal() {
+	e1 = p2 - p1;
+	e2 = p3 - p2;
+	
+	return outer_ prod(e2, e1);
+}
+
+bool Face::isOnFace(ublas::vector<float> p) {
+	if (inner_prod(getNormal(), p) == 0)
+		return true;
+	else 
+		return false;	
+}
+
 Sphere::Sphere(std::string n, ublas::vector<float> o,
 				ublas::vector<float> c, float r){
 	name = n;
