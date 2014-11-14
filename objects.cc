@@ -229,19 +229,19 @@ float Light::norm() {
 	return norm_2(directionVector);
 }
 
-ublas::vector<float> Light::getColor() {
+ublas::vector<int> Light::getColor() {
 	return color;
 }
 
-float Light::getRed() {
+int Light::getRed() {
 	color(RED);
 }
 
-float Light::getGreen() {
+int Light::getGreen() {
 	color(GREEN);
 }
 
-float Light::getBlue() {
+int Light::getBlue() {
 	color(BLUE);
 }
 

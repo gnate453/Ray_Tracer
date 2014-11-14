@@ -197,7 +197,7 @@ World worldFromString(std::string d) {
 			std::stringstream parse(tmp.substr(LENGTH_1, tmp.length()));
 
 			ublas::vector<float> dir (VECTOR_3DH);
-			ublas::vector<float> c (VECTOR_C);
+			ublas::vector<int> c (VECTOR_C);
 
 			parse>>dir(X);
 			parse>>dir(Y);
@@ -206,7 +206,8 @@ World worldFromString(std::string d) {
 			parse>>c(RED);
 			parse>>c(GREEN);
 			parse>>c(BLUE);
-			
+			c(ALPHA) = 1;		
+		
 			Light l(dir, c);
 			
 			newWorld.addLight(l);
@@ -226,7 +227,6 @@ void castRays(World w) {
 	std::list<Scene> scenes = w.getScenes();
 	std::list<Image> imgs;
 	//float rsqd, csqd;
-
 	
 	for (std::list<Scene>::iterator sit = scenes.begin();
 			sit != scenes.end(); ++sit)
@@ -314,23 +314,34 @@ void intersectRayWithSpheres(Ray ray, std::list<Sphere> spheres, std::list<Light
 				N = (1/norm_2(N)) * N; 
 				
 
-				float dr = 0.0;
-				float dg = 0.0;
-				float db = 0.0;
+				float fr = 0;
+				float fg = 0;
+				float fb = 0;
+				int dr = 0;
+				int dg = 0;
+				int db = 0;
 				for (std::list<Light>::iterator	l = lights.begin(); l != lights.end(); ++l) {
-					std::cout<<"Light: "<<l->getColor()<<std::endl;
-					std::cout<<"Object: "<<s->getColor().getDiffuseProperties()<<std::endl;
-					std::cout<<"cos(theta): "<<std::abs(inner_prod(N, l->getUnitVector()))<<std::endl;
-					dr += s->getColor().getDiffuseRed() * l->getRed() * std::abs(inner_prod(N, l->getUnitVector()));
-					dg += s->getColor().getDiffuseGreen() * l->getGreen() * std::abs(inner_prod(N, l->getUnitVector()));
-					db += s->getColor().getDiffuseBlue() * l->getBlue() * std::abs(inner_prod(N, l->getUnitVector()));
+					//std::cout<<"Light: "<<l->getColor()<<std::endl;
+					//std::cout<<"Object: "<<s->getColor().getDiffuseProperties()<<std::endl;
+					//std::cout<<"cos(theta): "<<inner_prod(N, l->getUnitVector())<<std::endl;
+					if (inner_prod(N, l->getUnitVector()) < 0) {
+						fr =  DIFFUSE_FACT * s->getColor().getDiffuseRed() 
+										* std::abs(inner_prod(N, l->getUnitVector()));
+						fg =  DIFFUSE_FACT * s->getColor().getDiffuseGreen() 
+										* std::abs(inner_prod(N, l->getUnitVector()));
+						fb =  DIFFUSE_FACT * s->getColor().getDiffuseBlue() 
+										* std::abs(inner_prod(N, l->getUnitVector()));
+						dr += (int) floor(((float) l->getRed()) * fr);
+						dg += (int) floor(((float) l->getGreen()) * fg);
+						db += (int) floor(((float) l->getBlue()) * fb);
+						}
 				}			
 
 				
 				//std::cout<<"Object: "<<s->getName()<<" "<<ray.getScreenX()<<" "<<ray.getScreenY()<<std::endl;
-				std::cout<<"red: "<<dr<<std::endl;
-				std::cout<<"green: "<<dg<<std::endl;
-				std::cout<<"blue: "<<db<<std::endl;
+				//std::cout<<"red: "<<dr<<std::endl;
+				//std::cout<<"green: "<<dg<<std::endl;
+				//std::cout<<"blue: "<<db<<std::endl;
 
 				//float k = inner_prod(ray.unitVector() , N);
 				//std::cout<<"  Q: "<<Q<<" k: "<<k<<std::endl;
@@ -348,9 +359,17 @@ void intersectRayWithSpheres(Ray ray, std::list<Sphere> spheres, std::list<Light
 					(disN/(c.getFarClip() - c.getNearClip())));	
 				
 				
-				pr = ((int) floor(dr *COLOR_MAX)) + ar;
-				pg = ((int) floor(dg *COLOR_MAX)) + ag;
-				pb = ((int) floor(db *COLOR_MAX)) + ab;
+				pr = dr + ar;
+				if (pr > COLOR_MAX)
+					pr = COLOR_MAX;
+
+				pg = dg + ag;
+				if (pg >COLOR_MAX)
+					pg = COLOR_MAX;
+
+				pb = db + ab;
+				if (pb > COLOR_MAX)
+					pb = COLOR_MAX;
 		
 				img.setPixelRed(ray.getScreenX(), ray.getScreenY(), pr);
 				img.setPixelGreen(ray.getScreenX(), ray.getScreenY(), pg);

@@ -1,9 +1,9 @@
 mtllib m.mtl
-usemtl red
-s globe1 2 2 -10.0 1.5
 usemtl blue
-s globe2 -5 -5 -40.0 2
+s globe1 2 2 -20.0 1.5
 usemtl green
-s globe3 0 0 -70.5 1.7
+s globe2 -5 -5 -40.0 2
+usemtl orange
+s globe3 0 0 -10.0 1.25
 
 

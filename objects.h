@@ -37,6 +37,7 @@ namespace ublas = boost::numeric::ublas;
 #define COLOR_MAX 255
 #define COLOR_VALUES 256
 #define AMB_LIGHT 20.0
+#define DIFFUSE_FACT 0.00001
 #define ZERO 0
 #define BEGIN 0
 #define LENGTH_1 1
@@ -122,17 +123,17 @@ class Polygon {
 class Light {
 	private:
 	ublas::vector<float> directionVector;
-	ublas::vector<float> color;
+	ublas::vector<int> color;
 
 	public:
 	Light(ublas::vector<float>, ublas::vector<float>);
 	ublas::vector<float> getDirectionVector(); // v
 	ublas::vector<float> getUnitVector();  // U = (v/||v||)
 	float norm();	//||v|| = sqrt( (v1)^2 + (v2)^2 +...+(vn)^2 );
-	ublas::vector<float> getColor();
-	float getRed();
-	float getGreen();
-	float getBlue();
+	ublas::vector<int> getColor();
+	int getRed();
+	int getGreen();
+	int getBlue();
 };
 
 class Ray {
