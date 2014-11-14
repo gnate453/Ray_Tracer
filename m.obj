@@ -1,3 +1,9 @@
-s globe1 2 2 -10.0 1 0 134 200
-s globe2 -5 -5 -40.0 2 0 255 0
-s globe3 0 0 -4.43 .5 200 0 0
+mtllib m.mtl
+usemtl red
+s globe1 2 2 -10.0 1.5
+usemtl blue
+s globe2 -5 -5 -40.0 2
+usemtl green
+s globe3 0 0 -70.5 1.7
+
+

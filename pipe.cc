@@ -1,106 +1,219 @@
 #include "pipe.h"
 
-World worldFromString(std::string data) {
+World worldFromString(std::string d) {
 	
 	World newWorld;
-	std::string tmp, name;
-	char tmp2;
-	//TODO: create Material class cmtl stores the current material updated each time a matial is found 			in world string.  this material object is passed to objects constructed.  
-	Material cmtl;
-	
+	std::list<Face> facesInGroup;
+	std::string currentGroupName = "Default";
+	std::string curMaterial;
+	std::stringstream data(d);
+	std::string tmp;
+
 	while (std::getline(data, tmp))
 	{
 		//vertex
 		if (*(tmp.begin()) == 'v') {
-			std::stringstream parse(tmp.substr(TOSS_F, tmp.length());
-			//TODO: add a list of vectors to the World Class.
-			//TODO: add newly constructed vector to the list in World object.
+			std::stringstream parse(tmp.substr(LENGTH_1, tmp.length()));
+			ublas::vector<float> v (VECTOR_3DH);
+			parse>>v(X);
+			parse>>v(Y);
+			parse>>v(Z);
+
+			if (!parse.str().empty())
+				parse>>v(W);
+			else
+				v(W) = 1.0;			
+
+			newWorld.addVertex(v);
 		}
 		//face
 		else if (*(tmp.begin()) == 'f') {
-			std::stringstream parse(tmp.substr(TOSS_F, tmp.length());
-			//TODO: parse and construct face.
-			//add face to the current polygon object.
+			std::stringstream parse(tmp.substr(LENGTH_1, tmp.length()));
+			
+			std::queue<int> points;
+			while (!parse.str().empty()) {
+				char v;
+				parse>>v;
+				int i;
+				parse>>i;
+				points.push(i);
+			}
+			
+			if (points.size() == VERTEX_PER_FACE) {
+				int a, b, c;
+				a = points.front();
+				points.pop();
+				b = points.front();
+				points.pop();
+				c = points.front();
+				points.pop();
+				Face cFace(newWorld.getVertices()[a], 
+							newWorld.getVertices()[b], 
+							newWorld.getVertices()[c]);
+				facesInGroup.push_back(cFace);
+			}
+			else {
+				int a = points.front();
+				points.pop();
+				while (points.size() >= (VERTEX_PER_FACE - 1)) {
+					int b, c;
+					b = points.front();
+					points.pop();
+					c = points.front();
+					Face cFace(newWorld.getVertices()[a], 
+								newWorld.getVertices()[b], 
+								newWorld.getVertices()[c]);
+					facesInGroup.push_back(cFace);
+				}
+			}
+			
 		}
 		//group
 		else if (*(tmp.begin()) == 'g') {
-			std::stringstream parse(tmp.substr(TOSS_F, tmp.length());
-			//TODO: group works like material.
-			//TODO: create new Polygon class.
-			//construct 'current' a polygon object.
+			std::stringstream parse(tmp.substr(LENGTH_1, tmp.length()));
+
+			if (!facesInGroup.empty())
+			{
+				Polygon p(currentGroupName, (newWorld.getMaterials())[curMaterial], facesInGroup);
+				newWorld.addPolygon(p);
+			}
+			
+			parse>>currentGroupName;
+			facesInGroup = std::list<Face>();
 		}
 		//sphere
 		else if (*(tmp.begin()) == 's') {
-			std::stringstream parse(tmp.substr(TOSS_F, tmp.length());
-			ublas::vector<float> w (VECTOR_3D);
+			std::stringstream parse(tmp.substr(LENGTH_1, tmp.length()));
+			
+			std::string name;
+			ublas::vector<float> w (VECTOR_3DH);
+			
+			parse>>name;
 			parse>>w (X);
 			parse>>w (Y);
 			parse>>w (Z);
+			w (W) = 1.0;
 			float r;
 			parse>>r;
-			//std::cout<<name<<" "<<w<<" "<<c<<" "<<r<<std::endl;
+			//std::cout<<name<<" "<<w<<" "<<r<<std::endl;
 			//TODO: change sphere to have material instead of color.
-			Sphere sphere(name, w, cmtl, r);
+			Sphere sphere(name, newWorld.getMaterials()[curMaterial], w, r);
 			newWorld.addSphere(sphere);
 		}
 		//new material
 		else if (*(tmp.begin()) == 'n') { 
-			std::stringstream parse(tmp.substr(TOSS_S, tmp.length());
-			//TODO: add a list of materials to the World Class.
-			//TODO: add newly constructed material object to the list in world object.
+			std::stringstream parse(tmp.substr(LENGTH_6, tmp.length()));
+		
+			//std::cout<<parse.str()<<std::endl;	
+			std::string name, prefix;
+			ublas::vector<float> ka (VECTOR_C);
+			ublas::vector<float> kd (VECTOR_C);
+			ublas::vector<float> ks (VECTOR_C);
+
+			parse>>name;
+
+			std::getline(data, tmp);
+			std::stringstream a(tmp.substr(LENGTH_2, tmp.length()));
+			a>>ka(RED);
+			a>>ka(GREEN);
+			a>>ka(BLUE);
+			ka(ALPHA) = 0.0;
+			std::getline(data, tmp);
+			std::stringstream d(tmp.substr(LENGTH_2, tmp.length()));
+			d>>kd(RED);
+			d>>kd(GREEN);
+			d>>kd(BLUE);
+			kd(ALPHA) = 0.0;
+			std::getline(data, tmp);
+			std::stringstream s(tmp.substr(LENGTH_2, tmp.length()));
+			s>>ks(RED);
+			s>>ks(GREEN);
+			s>>ks(BLUE);
+			std::getline(data, tmp);
+			std::stringstream ph(tmp.substr(LENGTH_2, tmp.length()));
+			ph>>ks(ALPHA);
+			
+			//std::cout<<name<<" "<<ka<<" "<<kd<<" "<<ks<<std::endl; 			
+
+			Material mtl(name, ka, kd, ks);
+			newWorld.addMaterial(name, mtl);
 		}
 		//use material
 		else if (*(tmp.begin()) == 'u') {	
-			std::stringstream parse(tmp.substr(TOSS_S, tmp.length());
-			//TODO: get values to initialize a material
-			//set cmtl to newly constructed material.
-			//TODO:: important material will likely need a copy constructor and = operator.
-			//since this object will be passed to objects then cmtl will be destroyed at the end of thi				s function.
-			//not to mention the reference to cmtl may point to a different object at different times.
-			//TODO: alternatively create a list of materials and push back new materials.  
+			std::stringstream parse(tmp.substr(LENGTH_6, tmp.length()));
+			//std::cout<<"Before use: "<<curMaterial<<std::endl;	
+			parse>>curMaterial;
+			//std::cout<<"After use: "<<curMaterial<<std::endl;	
 		}
 		//camera
 		else if (*(tmp.begin()) == 'c')
 		{	
-			std::stringstream parse(tmp.substr(TOSS_F, tmp.length());
-			ublas::vector<float> prp (VECTOR_3D);
-			l>>prp (X);
-			l>>prp (Y);
-			l>>prp (Z);
-			ublas::vector<float> vpn (VECTOR_3D);
-			l>>vpn (X);
-			l>>vpn (Y);
-			l>>vpn (Z);
+			std::stringstream parse(tmp.substr(LENGTH_1, tmp.length()));
+			
+			std::string name;
+			ublas::vector<float> prp (VECTOR_3DH);
+			ublas::vector<float> vpn (VECTOR_3DH);
+
+			parse>>name;
+			parse>>prp (X);
+			parse>>prp (Y);
+			parse>>prp (Z);
+			prp (W) = 1.0;
+			
+			parse>>vpn (X);
+			parse>>vpn (Y);
+			parse>>vpn (Z);
+			vpn (W) = 1.0;			
+
 			float near, far;
-			l>>near;
-			l>>far;
+			parse>>near;
+			parse>>far;
 			//put the vpn at z= -near;
 			vpn (Z) = -near; 
 			//TODO: add new camera information to Camera Class.
 			//TODO: parse new camera information.  Construct camera object appropriately.
 			Camera camera(name, prp, vpn, near, far);
 			newWorld.addCamera(camera);
-	
 		}
 		//scene
-		else if (entry.compare("r") == 0)
+		else if (*(tmp.begin()) == 'r')
 		{	
 			//TODO: DOUBLE CHECK this is still all that is needed for a scene.
-			std::stringstream parse(tmp.substr(TOSS_F, tmp.length());
+			std::stringstream parse(tmp.substr(LENGTH_1, tmp.length()));
+
+			std::string name;
 			int width, height, depth;
-			l>>width;
-			l>>height;
-			l>>depth;
+			
+			parse>>name;
+			parse>>width;
+			parse>>height;
+			parse>>depth;
+
 			Scene scene(name, width, height, depth);
 			newWorld.addScene(scene);
 		}
-		else if (entry.compare("l") == 0)
+		else if (*(tmp.begin()) == 'l')
 		{	
-			std::stringstream parse(tmp.substr(TOSS_F, tmp.length());
-			//TODO: create new LightSouce Class.
-			//TODO: parse and construct light object.
+			std::stringstream parse(tmp.substr(LENGTH_1, tmp.length()));
+
+			ublas::vector<float> dir (VECTOR_3DH);
+			ublas::vector<float> c (VECTOR_C);
+
+			parse>>dir(X);
+			parse>>dir(Y);
+			parse>>dir(Z);
+			parse>>dir(W);
+			parse>>c(RED);
+			parse>>c(GREEN);
+			parse>>c(BLUE);
+			
+			Light l(dir, c);
+			
+			newWorld.addLight(l);
 		}
 	}
+
+	//std::cout<<"parse 2 done"<<std::endl;
 
 	return newWorld;
 }
@@ -108,10 +221,11 @@ World worldFromString(std::string data) {
 void castRays(World w) {
 
 	std::list<Sphere> spheres = w.getSpheres();
+	std::list<Polygon> polygons = w.getPolygons();
 	std::list<Camera> cameras = w.getCameras();
 	std::list<Scene> scenes = w.getScenes();
 	std::list<Image> imgs;
-	float rsqd, csqd;
+	//float rsqd, csqd;
 
 	
 	for (std::list<Scene>::iterator sit = scenes.begin();
@@ -121,37 +235,32 @@ void castRays(World w) {
 				cit != cameras.end(); ++cit)
 		{
 			//get r^2 and c^2 for each sphere.
-			for (std::list<Sphere>::iterator oit = spheres.begin();
-					oit != spheres.end(); ++oit)
-			{
-				//radius squared
-				rsqd = (oit->getRadius()*oit->getRadius());
-				oit->setRadiusSquared(rsqd);
-			
-				//csqd = norm_2(oit->getOrigin() -  cit->getPRP()) * norm_2(oit->getOrigin() -  cit->getPRP());
-				//oit->setDistanceToPRPSquared(csqd);
+			//for (std::list<Sphere>::iterator oit = spheres.begin();
+			//		oit != spheres.end(); ++oit)
+			//{
+			//	std::cout<<oit->getName()<<": "<<oit->getOrigin()<<" "<<oit->getRadius()<<std::endl;	
+			//}//end for each sphere
 
-				//std::cout<<oit->getName()<<" rsqd: "<<rsqd<<" "<<"csqd: "<<csqd<<std::endl;	
-			}//end for each sphere
-	
 			Image img(sit->getName()+"_"+cit->getName(), sit->getWidth(), sit->getHeight());
 			for (int i = 0; i < sit->getHeight(); ++i)
 			{
 				float y = (2.0/(sit->getHeight()-1))*i - 1 ;
 				for (int j = 0; j < sit->getWidth(); ++j)
 				{
-					Ray tmpR(cit->getPRP()) ;
+					Ray tmpR(cit->getPRP());
 					float x = (2.0/(sit->getWidth()-1))*j - 1;
-					tmpR.setX(j);
-					tmpR.setY(i);
+					tmpR.setScreenX(j);
+					tmpR.setScreenY(i);
 					//std::cout<<x<<","<<y<<" ";
 					//std::cout<<j<<","<<i<<" ";
-					ublas::vector<float> rv (VECTOR_3D);
+					ublas::vector<float> rv (VECTOR_3DH);
 					rv (X) = x;
 					rv (Y) = y;
 					rv (Z) = -cit->getNearClip();
-					tmpR.setPixel(rv);
-					intersectRayWithObjects(tmpR, spheres, *cit, img);
+					rv (W) = 1.0;
+					tmpR.setPixelWorldCoord(rv);
+					intersectRayWithSpheres(tmpR, spheres,	w.getLights(), *cit, img);
+					intersectRayWithPolygons(tmpR, polygons, w.getLights(), *cit, img);
 				}
 				//std::cout<<std::endl;
 			}	
@@ -165,82 +274,97 @@ void castRays(World w) {
 	outputImages(imgs);
 }
 
-void intersectRayWithObjects(Ray ray, std::list<Sphere> objs, Camera c, Image &img) {
+void intersectRayWithSpheres(Ray ray, std::list<Sphere> spheres, std::list<Light> lights, Camera c, Image &img) {
 
 	ublas::vector<float> U = ray.unitVector();
 	//std::cout<<ray.getX()<<","<<ray.getY()<<" U: "<<U<<std::endl;
 	int pr = 0;
 	int pg = 0;
 	int pb = 0;
-	for (std::list<Sphere>::iterator oit = objs.begin(); oit != objs.end(); ++oit)
+	for (std::list<Sphere>::iterator s = spheres.begin(); s != spheres.end(); ++s)
 	{
 		float v, csqd, dsqd;
-		//std::cout<<"Object: "<<oit->getName()<<std::endl;
+		//std::cout<<"Object: "<<s->getName()<<" "<<ray.getScreenX()<<" "<<ray.getScreenY()<<std::endl;
 		//c squared (sphere origin -camera prp)
-		if (ray.getPixel() (Z) > oit->getOrigin() (Z)) {
+		if (ray.getPixelWorldCoord() (Z) > s->getOrigin() (Z)) {
 		//	std::cout<<"sphere past near clip "<<std::endl;
-			csqd = norm_2(oit->getOrigin() - ray.getPixel()) *  norm_2(oit->getOrigin() - ray.getPixel());
-			v = inner_prod(oit->getOrigin() - ray.getPixel(), U);
-			dsqd = oit->getRadiusSquared() - ( csqd - (v * v) );
+			csqd = s->getDistanceToVPN(ray.getPixelWorldCoord()) *  s->getDistanceToVPN(ray.getPixelWorldCoord());
+			v = inner_prod(subtractVectors(s->getOrigin(), ray.getPixelWorldCoord()), U);
+			dsqd = s->getRadiusSquared() - ( csqd - (v * v) );
+			//std::cout<<dsqd<<std::endl;
 		}
 		else {
-		//	std::cout<<"sphere before near clip "<<std::endl;
-			csqd = norm_2(ray.getPixel() - oit->getOrigin()) *  norm_2(ray.getPixel() - oit->getOrigin());
-			v = inner_prod(ray.getPixel() - oit->getOrigin() , U);
-			dsqd = ( csqd - (v * v) ) - oit->getRadiusSquared();
+			//	std::cout<<"sphere before near clip "<<std::endl;
+			csqd = s->getDistanceToVPN(ray.getPixelWorldCoord()) *  s->getDistanceToVPN(ray.getPixelWorldCoord());
+			v = inner_prod(subtractVectors(ray.getPixelWorldCoord(),  s->getOrigin()), U);
+			dsqd = ( csqd + (v * v) ) - s->getRadiusSquared();
+			//std::cout<<dsqd<<std::endl;
 		}
-		oit->setDistanceToPRPSquared(csqd);
-		//std::cout<<" r^2: "<<oit->getRadiusSquared()<<" c^2: "<<oit->getDistanceToPRPSquared()<<" v^2: "<<v*v<<std::endl;
+		//std::cout<<" r^2: "<<s->getRadiusSquared()<<" c^2: "<<csqd<<" v^2: "<<v*v<<std::endl;
 		if (dsqd >= 0)
 		{
 			float d = std::sqrt(dsqd);
-		//	std::cout<<"  d^2: "<<dsqd<<" d: "<<d<<" v: "<<v<<"\n"<<std::endl;
+			//std::cout<<"  d^2: "<<dsqd<<" d: "<<d<<"\n"<<std::endl;
 			//normal to sphere
 			ublas::vector<float> S = ray.paraPos(v-d);
 			if ( S(Z) < -c.getNearClip()  && S(Z) > -c.getFarClip()) { 
 				//std::cout<<"Object: "<<oit->getName()<<" S(Z): "<<S(Z)<<std::endl;
 				//std::cout<<"near: "<<-cit->getNearClip()<<" far: "<<-cit->getFarClip()<<std::endl;
-				ublas::vector<float> N = oit->getOrigin() - S;
+				ublas::vector<float> N = subtractVectors(s->getOrigin(), S);
 				N = (1/norm_2(N)) * N; 
-						
-				float k = inner_prod(ray.unitVector() , N);
-				//std::cout<<"  Q: "<<Q<<" k: "<<k<<std::endl;
-						
-				int r = (int) floor(oit->getColor() (RED) * std::abs(k) + AMB_LIGHT);
-				if (r < COLOR_MAX)
-					pr = r;
-				else 
-					pr = COLOR_MAX;
+				
 
-				int g =  (int) floor(oit->getColor() (GREEN) * std::abs(k) + AMB_LIGHT);
-				if (g < COLOR_MAX)
-					pg = g;
-				else 
-					pg = COLOR_MAX;
-						
-				int b = (int) floor(oit->getColor() (BLUE) * std::abs(k) + AMB_LIGHT);
-				if (b < COLOR_MAX)
-					pb = b;
-				else 
-					pb = COLOR_MAX;
-						
-				ublas::vector<float> fc = ray.getPixel();	
+				float dr = 0.0;
+				float dg = 0.0;
+				float db = 0.0;
+				for (std::list<Light>::iterator	l = lights.begin(); l != lights.end(); ++l) {
+					std::cout<<"Light: "<<l->getColor()<<std::endl;
+					std::cout<<"Object: "<<s->getColor().getDiffuseProperties()<<std::endl;
+					std::cout<<"cos(theta): "<<std::abs(inner_prod(N, l->getUnitVector()))<<std::endl;
+					dr += s->getColor().getDiffuseRed() * l->getRed() * std::abs(inner_prod(N, l->getUnitVector()));
+					dg += s->getColor().getDiffuseGreen() * l->getGreen() * std::abs(inner_prod(N, l->getUnitVector()));
+					db += s->getColor().getDiffuseBlue() * l->getBlue() * std::abs(inner_prod(N, l->getUnitVector()));
+				}			
+
+				
+				//std::cout<<"Object: "<<s->getName()<<" "<<ray.getScreenX()<<" "<<ray.getScreenY()<<std::endl;
+				std::cout<<"red: "<<dr<<std::endl;
+				std::cout<<"green: "<<dg<<std::endl;
+				std::cout<<"blue: "<<db<<std::endl;
+
+				//float k = inner_prod(ray.unitVector() , N);
+				//std::cout<<"  Q: "<<Q<<" k: "<<k<<std::endl;
+
+				int ar = s->getColor().getAmbientRed() * AMB_LIGHT;
+				int ag = s->getColor().getAmbientGreen() * AMB_LIGHT;
+				int ab = s->getColor().getAmbientBlue() * AMB_LIGHT;
+					
+				ublas::vector<float> fc = ray.getPixelWorldCoord();	
 				fc (Z) = -c.getFarClip();
-				float disN = norm_2(S - ray.getPixel());
-				float disF = norm_2(fc - S);
-	
+				float disN = norm_2(subtractVectors(S, ray.getPixelWorldCoord()));
+				float disF = norm_2(subtractVectors(fc, S));
+
 				int pdepth = (int)  COLOR_MAX - std::min( float (COLOR_MAX), (COLOR_MAX)*
 					(disN/(c.getFarClip() - c.getNearClip())));	
-						
-				img.setPixelRed(ray.getX(), ray.getY(), pr);
-				img.setPixelGreen(ray.getX(), ray.getY(), pg);
-				img.setPixelBlue(ray.getX(), ray.getY(), pb);
-				img.setPixelDepth(ray.getX(), ray.getY(), pdepth);
+				
+				
+				pr = ((int) floor(dr *COLOR_MAX)) + ar;
+				pg = ((int) floor(dg *COLOR_MAX)) + ag;
+				pb = ((int) floor(db *COLOR_MAX)) + ab;
+		
+				img.setPixelRed(ray.getScreenX(), ray.getScreenY(), pr);
+				img.setPixelGreen(ray.getScreenX(), ray.getScreenY(), pg);
+				img.setPixelBlue(ray.getScreenX(), ray.getScreenY(),  pb);
+				img.setPixelDepth(ray.getScreenX(), ray.getScreenY(), pdepth);
 				//std::cout<<ray.getX()<<","<<ray.getY()<<": "<<v<<" r^2:"<<oit->getRadiusSquared()
 				//			<<" c^2:"<<oit->getDistanceToPRPSquared()<<" d:"<<d<<" "
 				//			<<pr<<","<<pb<<","<<pg<<std::endl;
 			}	//end if in view frustrum		
-		}	//end if intersection possible	
-	}	//end for each object/sphere
+		}	//end if intersection possible
+	}	//end for each sphere
 } 
 
+
+void intersectRayWithPolygons(Ray ray, std::list<Polygon> polygons, std::list<Light> lights, Camera c, Image &img) {
+	
+}

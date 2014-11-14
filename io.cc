@@ -6,13 +6,20 @@ std::string readInputFiles(char** argv) {
 
 	//open the object file for reading.
 	objFileName = argv[1];
-	std::ifstream objFile(objFileName);
+	std::ifstream objFile(objFileName.c_str());
 	
 	//get the material file name.
 	std::getline(objFile, tmp);
-	mtlFileName = objFileName.substr(0, objFileName.find_last_of("\\/");
-	mtlFileName = mtlFileName + tmp;
-
+	tmp = tmp.substr(LENGTH_7 , (tmp.size() - 1));
+	
+	if (objFileName.find("\\/") != std::string::npos) {
+		mtlFileName = objFileName.substr(BEGIN, objFileName.find_last_of("\\/"));
+		mtlFileName = mtlFileName + tmp;
+	}
+	else {
+		mtlFileName = tmp;
+	}
+	
 	//get the rest of the object file.
 	while (std::getline(objFile, tmp))
 	{
@@ -27,16 +34,18 @@ std::string readInputFiles(char** argv) {
 		else if (*(tmp.begin()) == 'u')
 			objects += tmp + "\n";
 	}
-	objFile.close();
-	
+	objFile.close();	
 
 	//open the material file for reading.
-	std::ifstream mtlFile(mtlFileName);
-
+	std::ifstream mtlFile(mtlFileName.c_str());
 	//get lines from materials file.
 	while (std::getline(mtlFile, tmp))
 	{
-		materials += tmp + "\n";
+		std::string check = tmp.substr(BEGIN, LENGTH_2);
+		if ( check.compare("n1") != 0 &&
+			 check.compare("Tr") != 0 &&
+			 check.compare("Kr") != 0 )		
+			materials += tmp + "\n";
 	}
 	mtlFile.close();
 
@@ -51,6 +60,9 @@ std::string readInputFiles(char** argv) {
 	commFile.close();
 	
 	world = vertices + materials + objects + commands;
+
+	//std::cout<<world<<std::endl;
+	//std::cout<<"parse 1 done"<<std::endl;
 
 	return world;
 }

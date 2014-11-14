@@ -1,13 +1,68 @@
 #include "objects.h"
 
+ublas::vector<float> subtractVectors(ublas::vector<float> v1, ublas::vector<float> v2) {
+	if (v1.size() == VECTOR_3D && v2.size() == VECTOR_3D) {
+		return v1 - v2;
+	}
+	else if (v1.size() == VECTOR_3DH && v2.size() == VECTOR_3D) {
+		ublas::vector<float> r (VECTOR_3DH);
+		r (X) = (v1 (X) / v1 (W)) - v2 (X);
+		r (Y) = (v1 (Y) / v1 (W)) - v2 (Y);
+		r (Z) = (v1 (Z) / v1 (W)) - v2 (Z);
+		r (W) = 1.0; 
+		return r;
+	}
+	else if (v1.size() == VECTOR_3D && v2.size() == VECTOR_3DH) {
+		ublas::vector<float> r (VECTOR_3DH);
+		r (X) = v1 (X) - (v2 (X) / v2 (W));
+		r (Y) = v1 (Y) - (v2 (Y) / v2 (W));
+		r (Z) = v1 (Z) - (v2 (Z) / v2 (W));
+		r (W) = 1.0; 
+		return r;
+	}
+	else if (v1.size() == VECTOR_3DH && v2.size() == VECTOR_3DH) {
+		ublas::vector<float> r (VECTOR_3DH);
+		r (X) = (v1 (X) / v1 (W)) - (v2 (X) / v2 (W));
+		r (Y) = (v1 (Y) / v1 (W)) - (v2 (Y) / v2 (W));
+		r (Z) = (v1 (Z) / v1 (W)) - (v2 (Z) / v2 (W));
+		r (W) = 1.0; 
+		return r;
+	}
 
-Material::Material(const &ublas::vector<float> c) {
+}
+
+Material::Material() {
+	name = "Default";
+	
+	ublas::vector<float> a (VECTOR_C);
+	a (RED) = 1.0;
+	a (GREEN) = 1.0;
+	a (BLUE) = 0.0;
+	ka = a;	
+
+	ublas::vector<float> d (VECTOR_C);
+	d (RED) = 1.0;
+	d (GREEN) = 1.0;
+	d (BLUE) = 0.0;
+	kd = d;	
+
+	ublas::vector<float> s (VECTOR_C);
+	s (RED) = 1.0;
+	s (GREEN) = 1.0;
+	s (BLUE) = 0.0;
+	s (ALPHA) = 1.0;
+	ks = s;	
+}
+
+Material::Material(const std::string& n, const ublas::vector<float>& c) {
+	name = n;
 	ka = c;
 	kd = c;
 	ks = c;
 }
 
-Material::Material(const ublas::vector<float>& a, const ublas::vector<float>& d, const ublas::vector<float>& s) {
+Material::Material(const std::string& n, const ublas::vector<float>& a, const ublas::vector<float>& d, const ublas::vector<float>& s) {
+	name = n;
 	ka = a;
 	kd = d;
 	ks = s;
@@ -22,7 +77,7 @@ float Material::getAmbientRed() {
 }
 
 float Material::getAmbientGreen() {
-	reutn ka(GREEN);
+	return ka(GREEN);
 }
 
 float Material::getAmbientBlue() {
@@ -76,14 +131,22 @@ ublas::vector<float> Face::getVertex(int i) {
 	case P_TWO :
 		return p2;
 	case P_THREE :
-		return p3;	
+		return p3;
+	}
 }
 	
 ublas::vector<float> Face::getNormal() {
-	e1 = p2 - p1;
-	e2 = p3 - p2;
-	
-	return outer_ prod(e2, e1);
+	ublas::vector<float> e1 = p2 - p1;
+	ublas::vector<float> e2 = p3 - p2;
+
+	ublas::vector<float> n (VECTOR_3DH);
+
+	n (X) = ((e2(Y)/e2(W)) * (e1(Z)/e1(W)))	- ((e2(Z)/e2(W)) * (e1(Y)/e1(W)));
+	n (Y) = ((e2(X)/e2(W)) * (e1(Z)/e1(W)))	- ((e2(Z)/e2(W)) * (e1(X)/e1(W)));
+	n (Z) = ((e2(X)/e2(W)) * (e1(Y)/e1(W)))	- ((e2(Y)/e2(W)) * (e1(X)/e1(W)));
+	n (W) = 1;
+
+	return n;
 }
 
 bool Face::isOnFace(ublas::vector<float> p) {
@@ -93,30 +156,20 @@ bool Face::isOnFace(ublas::vector<float> p) {
 		return false;	
 }
 
-Object::Object(const std::string& n, const Material& mtl) {
-	
-}
-
-std::string Object::getName(){
-	return name;
-}
-
-ublas::vector<float> Object::getColor(){
-	return color;
-}
-
-void Object::setDistanceToPRPSquared(float i) {
-	disToPRPSquared = i;
-}
-
-float Object::getDistanceToPRPSquared() {
-	return disToPRPSquared;
-}
-
-Sphere::Sphere(const std::string& n, const Material& mtl, const ublas::vector<float>& o,const float &r) : Object(n, mtl) {
+Sphere::Sphere(const std::string& n, const Material& mtl, const ublas::vector<float>& o,const float &r) {
+	name = n;
+	color = mtl;
 	originWorldCoord = o;
 	radius = r;
 } 
+
+std::string Sphere::getName() {
+	return name;
+}
+
+Material Sphere::getColor() {
+	return color;
+}
 
 ublas::vector<float> Sphere::getOrigin(){
 	return originWorldCoord;
@@ -130,19 +183,36 @@ float Sphere::getRadiusSquared() {
 	return radius * radius;
 }
 
-Polygon::Polygon(const std::string& n, const Material& mtl, std::list<faces> f) : Object(n, mtl) {
+float Sphere::getDistanceToVPN(ublas::vector<float> vpn) {
+	ublas::vector<float> t;
+	if (vpn (Z) > originWorldCoord (Z)) {
+		t = subtractVectors(originWorldCoord, vpn);
+	}
+	else {
+		t = subtractVectors(vpn, originWorldCoord);
+	}
+	return norm_2(t);
+}
+
+Polygon::Polygon(const std::string& n, const Material& mtl, std::list<Face> f) {
+	name = n;
+	color = mtl;
 	faces = f;
 }
 
-std::list<Face> getFaces() {
+std::string Polygon::getName() {
+	return name;
+}
+
+Material Polygon::getColor() {
+	return color;
+}
+
+std::list<Face> Polygon::getFaces() {
 	return faces;
 }
 
-int getFaceCount() {
-	return faces.size();
-}
-
-Light::Light( ublas::vector<float> dir, ublas vector<float> l) {
+Light::Light( ublas::vector<float> dir, ublas::vector<float> l) {
 	directionVector = dir;
 	color = l; 
 }
@@ -152,7 +222,7 @@ ublas::vector<float> Light::getDirectionVector() {
 }
 
 ublas::vector<float> Light::getUnitVector() {
-	return (1/norm()) * directionVector();
+	return (1/norm()) * directionVector;
 }
 
 float Light::norm() {
@@ -160,7 +230,7 @@ float Light::norm() {
 }
 
 ublas::vector<float> Light::getColor() {
-	return color();
+	return color;
 }
 
 float Light::getRed() {
@@ -214,7 +284,7 @@ ublas::vector<float> Ray::getPRP() {
 
 //v = L - E, L is pixel of view plane, E is PRP
 ublas::vector<float> Ray::rayVector() {
-	return getPixel() - getPRP(); 
+	return getPixelWorldCoord() - getPRP(); 
 } 	
 
 // ||v|| = sqrt( (v1)^2 + (v2)^2 +...+(vn)^2 )
@@ -234,7 +304,7 @@ ublas::vector<float> Ray::unitVectorScaled(float s) {
 	
 // R(s) = L + sU,  L is pixel of view plane.
 ublas::vector<float> Ray::paraPos(float s) {
-	return ( getPixel() + unitVectorScaled(s) );
+	return ( getPixelWorldCoord() + unitVectorScaled(s) );
 }
 
 Camera::Camera(std::string n, ublas::vector<float> prp,
@@ -473,24 +543,42 @@ void World::addScene(Scene s) {
 	scenes.push_back(s);
 }
 
-std::list<Object> World::getObjects() {
-	return objects;
+std::list<Sphere> World::getSpheres() {
+	return spheres;
 }
 
-void World::addObject(Object o) {
-	objects.push_back(o);
+void World::addSphere(Sphere s) {
+	spheres.push_back(s);
 }
 
-std::map<ublas::vector<float>> World::getVetices() {
-	return verticies;
+std::list<Polygon> World::getPolygons() {
+	return polygons;
+}
+
+void World::addPolygon(Polygon p) {
+	polygons.push_back(p);
+}
+
+std::list<Light> World::getLights() {
+	return lights;
+}
+
+void World::addLight(Light l) {
+	lights.push_back(l);
+}
+
+std::map<size_t, ublas::vector<float> > World::getVertices() {
+	return vertices;
 }
 
 void World::addVertex(ublas::vector<float> v) {
 	vertices [vertices.size()] = v;
+}
 
-std::map<ublas::vector<float>> World::getMaterials() {
+std::map<std::string, Material> World::getMaterials() {
 	return materials;
 }
 
-void World::addMaterial(Material mtl) {
-	materials [materials.size()] =  mtl;
+void World::addMaterial(std::string n, Material mtl) {
+	materials [n] =  mtl;
+}

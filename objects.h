@@ -3,8 +3,10 @@
 
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/numeric/ublas/io.hpp>
+#include <cmath>
 #include <list>
-#include <list>
+#include <map>
+#include <queue>
 
 #ifndef NAME_UBLAS_ALIAS
 #define NAME_UBLAS_ALIAS 1
@@ -13,32 +15,50 @@ namespace ublas = boost::numeric::ublas;
 
 #define VECTOR_2D 2
 #define VECTOR_3D 3
+#define VECTOR_2DH 3
+#define VECTOR_3DH 4
 #define	VECTOR_C 4
-#define MATRIX_2D 3
-#define MATRIX_3D 4
+#define MATRIX_2D 2
+#define MATRIX_3D 3
+#define MATRIX_2DH 3
+#define MATRIX_3DH 4
+#define VERTEX_PER_FACE 3
+#define P_ONE 0
+#define P_TWO 1
+#define P_THREE 2
 #define X 0
 #define Y 1
 #define Z 2
+#define W 3
 #define RED 0
 #define GREEN 1
 #define BLUE 2
 #define ALPHA 3
 #define COLOR_MAX 255
 #define COLOR_VALUES 256
-#define AMB_LIGHT 10.0
+#define AMB_LIGHT 20.0
 #define ZERO 0
-#define TOSS_F 2
-#define TOSS_S 6
+#define BEGIN 0
+#define LENGTH_1 1
+#define LENGTH_2 2
+#define LENGTH_6 6
+#define LENGTH_7 7
+
+
+ublas::vector<float> subtractVectors(ublas::vector<float> v1, ublas::vector<float> v2);
 
 class Material {
 	private:
+	std::string name;
 	ublas::vector<float> ka;
 	ublas::vector<float> kd;
 	ublas::vector<float> ks;
 
 	public:
-	Material(ublas::vector<float>);
-	Material(ublas::vector<float>, ublas::vector<float>, ublas::vector<float>);
+	Material();
+	Material(const std::string&, const ublas::vector<float>&);
+	Material(const std::string&, const ublas::vector<float>&, const ublas::vector<float>&, const ublas::vector<float>&);
+	std::string getName();
 	ublas::vector<float> getAmbientProperties();
 	float getAmbientRed();
 	float getAmbientGreen();
@@ -61,50 +81,42 @@ class Face {
 	ublas::vector<float> p3;
 
 	public:
-	Face(ublas::vector<float>, ublas::vector<float>, ublas::vector<float>);
+	Face(const ublas::vector<float>&, const ublas::vector<float>&, const ublas::vector<float>& );
 	ublas::vector<float> getVertex(int);
-	float getNormal();
+	ublas::vector<float> getNormal();
 	bool isOnFace(ublas::vector<float>);
 	
 };
 
-class Object {
-	private:	
+class Sphere {
+	private:
 	std::string name;
 	Material color;	
-	float disToPRPSquared;
-	
+	float radius;
+	ublas::vector<float> originWorldCoord;
+
 	public:
-	Object(std::string, Material);	
+	Sphere(const std::string&, const Material&, const ublas::vector<float>&, const float&); 
 	std::string getName();
 	Material getColor(); 
-	void setDistanceToPRPSquared(float);
-	float getDistanceToPRPSquared();
-};
-
-class Sphere : public Object {
-	private:
-	ublas::vector<float> originWorldCoord;
-	float radius;	
-	float radiusSquared;
-
-	public:
-	Sphere(std::string, Material, ublas::vector<float>, float); 
-	void setRadiusSquared(float);
 	ublas::vector<float> getOrigin();
 	float getRadius();
 	float getRadiusSquared();
+	float getDistanceToVPN(ublas::vector<float>);
+
 };
 
-class Polygon : public Object {
+class Polygon {
+	private:
+	std::string name;
+	Material color;	
 	std::list<Face> faces;
 
 	public:
-	Polygon(std::string, Material, std::list<faces>);
+	Polygon(const std::string&, const Material&, std::list<Face>);
+	std::string getName();
+	Material getColor(); 
 	std::list<Face> getFaces();
-	Face getFace(int);
-	float getNormaltoFace(int);
-	int getFaceCount();
 };
 
 class Light {
@@ -113,7 +125,7 @@ class Light {
 	ublas::vector<float> color;
 
 	public:
-	Light(ublas::vector<float>, ublas::vector<float>)
+	Light(ublas::vector<float>, ublas::vector<float>);
 	ublas::vector<float> getDirectionVector(); // v
 	ublas::vector<float> getUnitVector();  // U = (v/||v||)
 	float norm();	//||v|| = sqrt( (v1)^2 + (v2)^2 +...+(vn)^2 );
@@ -227,21 +239,27 @@ class World {
 	private:
 	std::list<Camera> cameras;
 	std::list<Scene> scenes;
-	std::list<Object> objects;
-	std::map<size_type, ublas::vector<float>> vertices;
-	std::list<size_type, Material> materials;
+	std::list<Sphere> spheres;
+	std::list<Polygon> polygons;
+	std::list<Light> lights;
+	std::map<std::size_t, ublas::vector<float> > vertices;
+	std::map<std::string, Material> materials;
 
 	public:
 	std::list<Camera> getCameras();
 	void addCamera(Camera);
 	std::list<Scene> getScenes();
 	void addScene(Scene);
-	std::list<Object> getObjects();
-	void addObject(Object);
-	std::map<size_type, <ublas::vector<float>> getVertices();
+	std::list<Sphere> getSpheres();
+	void addSphere(Sphere);
+	std::list<Polygon> getPolygons();
+	void addPolygon(Polygon);
+	std::list<Light> getLights();
+	void addLight(Light);
+	std::map<size_t, ublas::vector<float> > getVertices();
 	void addVertex(ublas::vector<float>);
-	std::map<size_type, Material> getMaterials();
-	void addMaterial(Material);
+	std::map<std::string, Material> getMaterials();
+	void addMaterial(std::string, Material);
 };
 
 #endif  /*define OBJS_H end */
