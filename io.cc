@@ -7,10 +7,20 @@ std::string readInputFiles(char** argv) {
 	//open the object file for reading.
 	objFileName = argv[1];
 	std::ifstream objFile(objFileName.c_str());
+
+	bool ismltLoad = false;
 	
-	//get the material file name.
-	std::getline(objFile, tmp);
-	tmp = tmp.substr(LENGTH_7 , (tmp.size() - 1));
+	while (!ismltLoad) {
+		std::getline(objFile, tmp);
+		if (*(tmp.begin()) ==  'm') {
+			//get the material file name.
+			tmp = tmp.substr(LENGTH_7 , (tmp.size() - 1));
+			ismltLoad = true;
+		}
+		else {
+			//TODO: nothing? mtl file is first command with op?
+		}	
+	}
 	
 	if (objFileName.find("\\/") != std::string::npos) {
 		mtlFileName = objFileName.substr(BEGIN, objFileName.find_last_of("\\/"));
@@ -44,7 +54,8 @@ std::string readInputFiles(char** argv) {
 		std::string check = tmp.substr(BEGIN, LENGTH_2);
 		if ( check.compare("n1") != 0 &&
 			 check.compare("Tr") != 0 &&
-			 check.compare("Kr") != 0 )		
+			 check.compare("Kr") != 0 &&
+			 *(check.begin()) != '#')		
 			materials += tmp + "\n";
 	}
 	mtlFile.close();
@@ -55,7 +66,8 @@ std::string readInputFiles(char** argv) {
 	//get lines from command file.
 	while (std::getline(commFile, tmp))
 	{
-		commands += tmp + "\n";
+		if (*(tmp.begin()) != '#')
+			commands += tmp + "\n";
 	}
 	commFile.close();
 	

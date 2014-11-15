@@ -31,11 +31,8 @@ World worldFromString(std::string d) {
 			std::stringstream parse(tmp.substr(LENGTH_1, tmp.length()));
 			
 			std::queue<int> points;
-			while (!parse.str().empty()) {
-				char v;
-				parse>>v;
-				int i;
-				parse>>i;
+			int i;
+			while (parse>>i) {
 				points.push(i);
 			}
 			
@@ -96,7 +93,6 @@ World worldFromString(std::string d) {
 			float r;
 			parse>>r;
 			//std::cout<<name<<" "<<w<<" "<<r<<std::endl;
-			//TODO: change sphere to have material instead of color.
 			Sphere sphere(name, newWorld.getMaterials()[curMaterial], w, r);
 			newWorld.addSphere(sphere);
 		}
@@ -153,6 +149,7 @@ World worldFromString(std::string d) {
 			std::string name;
 			ublas::vector<float> prp (VECTOR_3DH);
 			ublas::vector<float> vpn (VECTOR_3DH);
+			ublas::vector<float> vup (VECTOR_3DH);
 
 			parse>>name;
 			parse>>prp (X);
@@ -165,14 +162,16 @@ World worldFromString(std::string d) {
 			parse>>vpn (Z);
 			vpn (W) = 1.0;			
 
+			parse>>vup (X);
+			parse>>vup (Y);
+			parse>>vup (Z);
+			vup (W) = 1.0;
+		
 			float near, far;
 			parse>>near;
 			parse>>far;
-			//put the vpn at z= -near;
-			vpn (Z) = -near; 
-			//TODO: add new camera information to Camera Class.
 			//TODO: parse new camera information.  Construct camera object appropriately.
-			Camera camera(name, prp, vpn, near, far);
+			Camera camera(name, prp, vpn, vup, near, far);
 			newWorld.addCamera(camera);
 		}
 		//scene
@@ -234,31 +233,25 @@ void castRays(World w) {
 		for (std::list<Camera>::iterator cit = cameras.begin();
 				cit != cameras.end(); ++cit)
 		{
-			//get r^2 and c^2 for each sphere.
-			//for (std::list<Sphere>::iterator oit = spheres.begin();
-			//		oit != spheres.end(); ++oit)
-			//{
-			//	std::cout<<oit->getName()<<": "<<oit->getOrigin()<<" "<<oit->getRadius()<<std::endl;	
-			//}//end for each sphere
+			ublas::vector<float> n = (1/norm_2(cit->getVPN())) * cit->getVPN() ;
+			ublas::vector<float> u = (1/norm_2(crossProductVectors(cit->getVUP(), n))) 
+										* crossProductVectors(cit->getVUP(), n);
+			ublas::vector<float> v = crossProductVectors(n, u);
 
 			Image img(sit->getName()+"_"+cit->getName(), sit->getWidth(), sit->getHeight());
 			for (int i = 0; i < sit->getHeight(); ++i)
 			{
-				float y = (2.0/(sit->getHeight()-1))*i - 1 ;
+				
 				for (int j = 0; j < sit->getWidth(); ++j)
 				{
-					Ray tmpR(cit->getPRP());
 					float x = (2.0/(sit->getWidth()-1))*j - 1;
-					tmpR.setScreenX(j);
-					tmpR.setScreenY(i);
-					//std::cout<<x<<","<<y<<" ";
-					//std::cout<<j<<","<<i<<" ";
-					ublas::vector<float> rv (VECTOR_3DH);
-					rv (X) = x;
-					rv (Y) = y;
-					rv (Z) = -cit->getNearClip();
-					rv (W) = 1.0;
-					tmpR.setPixelWorldCoord(rv);
+					float y = (2.0/(sit->getHeight()-1))*i - 1;
+					ublas::vector<float> pixelWorldCoord (VECTOR_3DH);
+					pixelWorldCoord (X) = cit->getPRP() (X) + (-cit->getNearClip() * cit->getVPN()(X)) + (x * u(X)) + (y * v(X));
+					pixelWorldCoord (Y) = cit->getPRP() (Y) + (-cit->getNearClip() * cit->getVPN()(Y)) + (x * u(Y)) + (y * v(Y));
+					pixelWorldCoord (Z) = cit->getPRP() (Z) + (-cit->getNearClip() * cit->getVPN()(Z)) + (x * u(Z)) + (y * v(Z));
+					pixelWorldCoord (W) = 1.0;
+					Ray tmpR(cit->getPRP(), pixelWorldCoord, j, i);
 					intersectRayWithSpheres(tmpR, spheres,	w.getLights(), *cit, img);
 					intersectRayWithPolygons(tmpR, polygons, w.getLights(), *cit, img);
 				}
@@ -285,100 +278,129 @@ void intersectRayWithSpheres(Ray ray, std::list<Sphere> spheres, std::list<Light
 	{
 		float v, csqd, dsqd;
 		//std::cout<<"Object: "<<s->getName()<<" "<<ray.getScreenX()<<" "<<ray.getScreenY()<<std::endl;
+		//std::cout<<"PRP: "<<ray.getPRP()<<std::endl;
+		//std::cout<<"VPN: "<<c.getVPN()<<std::endl;
+		//std::cout<<"pixel coord: "<<ray.getPixelWorldCoord()<<std::endl;
+		//std::cout<<"U: "<<ray.unitVector()<<std::endl;
 		//c squared (sphere origin -camera prp)
-		if (ray.getPixelWorldCoord() (Z) > s->getOrigin() (Z)) {
-		//	std::cout<<"sphere past near clip "<<std::endl;
-			csqd = s->getDistanceToVPN(ray.getPixelWorldCoord()) *  s->getDistanceToVPN(ray.getPixelWorldCoord());
-			v = inner_prod(subtractVectors(s->getOrigin(), ray.getPixelWorldCoord()), U);
-			dsqd = s->getRadiusSquared() - ( csqd - (v * v) );
-			//std::cout<<dsqd<<std::endl;
-		}
-		else {
-			//	std::cout<<"sphere before near clip "<<std::endl;
-			csqd = s->getDistanceToVPN(ray.getPixelWorldCoord()) *  s->getDistanceToVPN(ray.getPixelWorldCoord());
-			v = inner_prod(subtractVectors(ray.getPixelWorldCoord(),  s->getOrigin()), U);
-			dsqd = ( csqd + (v * v) ) - s->getRadiusSquared();
-			//std::cout<<dsqd<<std::endl;
-		}
+		
+		//std::cout<<" r: "<<s->getRadius()<<" c: "<<s->getDistanceToPixel(ray.getPixelWorldCoord())<<" v: "<<v<<std::endl;
+		v = inner_prod(s->getOrigin() - ray.getPRP(), U);
+		csqd = s->getDistanceToPixel(ray.getPRP()) *  s->getDistanceToPixel(ray.getPRP());
+		dsqd = s->getRadiusSquared() - (csqd - (v * v));
+
 		//std::cout<<" r^2: "<<s->getRadiusSquared()<<" c^2: "<<csqd<<" v^2: "<<v*v<<std::endl;
-		if (dsqd >= 0)
-		{
+		if (dsqd >= 0) {
 			float d = std::sqrt(dsqd);
 			//std::cout<<"  d^2: "<<dsqd<<" d: "<<d<<"\n"<<std::endl;
 			//normal to sphere
 			ublas::vector<float> S = ray.paraPos(v-d);
-			if ( S(Z) < -c.getNearClip()  && S(Z) > -c.getFarClip()) { 
-				//std::cout<<"Object: "<<oit->getName()<<" S(Z): "<<S(Z)<<std::endl;
-				//std::cout<<"near: "<<-cit->getNearClip()<<" far: "<<-cit->getFarClip()<<std::endl;
-				ublas::vector<float> N = subtractVectors(s->getOrigin(), S);
+			//if ( (norm_2(ray.paraPos(c.getNearClip())) < norm_2(S)) 
+			//	&& (norm_2(S) < norm_2(ray.paraPos(c.getFarClip()))) ) { 
+				
+				ublas::vector<float> N = S - s->getOrigin();
 				N = (1/norm_2(N)) * N; 
 				
-
 				float fr = 0;
 				float fg = 0;
 				float fb = 0;
+				int sr = 0;
+				int sg = 0;
+				int sb = 0;
 				int dr = 0;
 				int dg = 0;
 				int db = 0;
+				
 				for (std::list<Light>::iterator	l = lights.begin(); l != lights.end(); ++l) {
+					
 					//std::cout<<"Light: "<<l->getColor()<<std::endl;
-					//std::cout<<"Object: "<<s->getColor().getDiffuseProperties()<<std::endl;
-					//std::cout<<"cos(theta): "<<inner_prod(N, l->getUnitVector())<<std::endl;
-					if (inner_prod(N, l->getUnitVector()) < 0) {
+					//std::cout<<"Object: "<<s->getColor().getSpecularProperties()<<std::endl;
+					//std::cout<<"cos(theta): "<<dotProductVectors(N, l->getUnitVector())<<std::endl;
+					
+					//Specular lighting.
+					double cosPhi = inner_prod(ray.unitVector(), ((2 * inner_prod(l->getUnitVector(), N) * N) - l->getUnitVector()));
+					double phong = pow(cosPhi, s->getColor().getSpecularAlpha());
+					
+					//std::cout<<"cos(Phi): "<<cosPhi<<std::endl;
+					//std::cout<<"Phong: "<<phong<<std::endl;
+
+					fr = 0; 
+					fg = 0;
+					fb = 0;
+					if (cosPhi <= 0) {
+						fr = l->getRed() * s->getColor().getSpecularRed() * phong;
+						fg = l->getGreen() * s->getColor().getSpecularGreen() * phong;
+						fb = l->getBlue() * s->getColor().getSpecularBlue() * phong;
+						
+						if (fr > 0)	
+							sr += (int) fr;
+						if (fg > 0)
+							sg += (int) fg;
+						if (fb > 0)
+							sb += (int) fb;
+					}
+					
+					//Diffuse Lighting
+					fr = 0; 
+					fg = 0;
+					fb = 0;
+					float cosTheta = inner_prod(N, l->getUnitVector()); 
+					if (cosTheta >= 0) {
 						fr =  DIFFUSE_FACT * s->getColor().getDiffuseRed() 
-										* std::abs(inner_prod(N, l->getUnitVector()));
+										* std::abs(cosTheta);
 						fg =  DIFFUSE_FACT * s->getColor().getDiffuseGreen() 
-										* std::abs(inner_prod(N, l->getUnitVector()));
+										* std::abs(cosTheta);
 						fb =  DIFFUSE_FACT * s->getColor().getDiffuseBlue() 
-										* std::abs(inner_prod(N, l->getUnitVector()));
+										* std::abs(cosTheta);
 						dr += (int) floor(((float) l->getRed()) * fr);
 						dg += (int) floor(((float) l->getGreen()) * fg);
 						db += (int) floor(((float) l->getBlue()) * fb);
-						}
+					}
 				}			
-
 				
 				//std::cout<<"Object: "<<s->getName()<<" "<<ray.getScreenX()<<" "<<ray.getScreenY()<<std::endl;
-				//std::cout<<"red: "<<dr<<std::endl;
-				//std::cout<<"green: "<<dg<<std::endl;
-				//std::cout<<"blue: "<<db<<std::endl;
+				//std::cout<<"red: "<<sr<<" "<<dr<<std::endl;
+				//std::cout<<"green: "<<sg<<" "<<dg<<std::endl;
+				//std::cout<<"blue: "<<sb<<" "<<db<<std::endl;
+
 
 				//float k = inner_prod(ray.unitVector() , N);
 				//std::cout<<"  Q: "<<Q<<" k: "<<k<<std::endl;
 
+
+				//Ambient Lighting.
 				int ar = s->getColor().getAmbientRed() * AMB_LIGHT;
 				int ag = s->getColor().getAmbientGreen() * AMB_LIGHT;
 				int ab = s->getColor().getAmbientBlue() * AMB_LIGHT;
 					
-				ublas::vector<float> fc = ray.getPixelWorldCoord();	
-				fc (Z) = -c.getFarClip();
-				float disN = norm_2(subtractVectors(S, ray.getPixelWorldCoord()));
-				float disF = norm_2(subtractVectors(fc, S));
-
-				int pdepth = (int)  COLOR_MAX - std::min( float (COLOR_MAX), (COLOR_MAX)*
-					(disN/(c.getFarClip() - c.getNearClip())));	
-				
-				
-				pr = dr + ar;
-				if (pr > COLOR_MAX)
+				//add lighting.				
+				pr = sr + dr + ar;
+				if ( std::abs(pr) > COLOR_MAX)
 					pr = COLOR_MAX;
 
-				pg = dg + ag;
-				if (pg >COLOR_MAX)
+				pg = sg + dg + ag;
+				if ( std::abs(pg) > COLOR_MAX)
 					pg = COLOR_MAX;
 
-				pb = db + ab;
-				if (pb > COLOR_MAX)
+				pb = sb + db + ab;
+				if ( std::abs(pb) > COLOR_MAX)
 					pb = COLOR_MAX;
-		
+
+				//depth TODO: needs fix?	
+				ublas::vector<float> fc = ray.getPixelWorldCoord();	
+				fc (Z) = -c.getFarClip();
+				float disN = norm_2(S - ray.getPixelWorldCoord());
+				float disF = norm_2(fc - S);
+
+				int pdepth = (int)  COLOR_MAX - std::min( float (COLOR_MAX), (COLOR_MAX)*
+					(disN/(c.getFarClip() - c.getNearClip())));
+
 				img.setPixelRed(ray.getScreenX(), ray.getScreenY(), pr);
 				img.setPixelGreen(ray.getScreenX(), ray.getScreenY(), pg);
 				img.setPixelBlue(ray.getScreenX(), ray.getScreenY(),  pb);
 				img.setPixelDepth(ray.getScreenX(), ray.getScreenY(), pdepth);
-				//std::cout<<ray.getX()<<","<<ray.getY()<<": "<<v<<" r^2:"<<oit->getRadiusSquared()
-				//			<<" c^2:"<<oit->getDistanceToPRPSquared()<<" d:"<<d<<" "
-				//			<<pr<<","<<pb<<","<<pg<<std::endl;
-			}	//end if in view frustrum		
+
+			//}	//end if in view frustrum		
 		}	//end if intersection possible
 	}	//end for each sphere
 } 

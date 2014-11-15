@@ -31,6 +31,76 @@ ublas::vector<float> subtractVectors(ublas::vector<float> v1, ublas::vector<floa
 
 }
 
+ublas::vector<float> crossProductVectors(ublas::vector<float> v1, ublas::vector<float> v2) {	
+
+	if (v1.size() == VECTOR_3D && v2.size() == VECTOR_3D) {
+		ublas::vector<float> r (VECTOR_3D);
+
+		r (X) = (v1(Y) * v2(Z))	- (v1(Z) * v2(Y));
+		r (Y) = (v1(X) * v2(Z))	- (v1(Z) * v2(X));
+		r (Z) = (v1(X) * v2(Y))	- (v1(Y) * v2(X));
+
+		return r;
+	}
+	else if (v1.size() == VECTOR_3DH && v2.size() == VECTOR_3D) {
+		ublas::vector<float> r (VECTOR_3DH);
+
+		r (X) = ((v1(Y)/v1(W)) * v2(Z))	- ((v1(Z)/v1(W)) * v2(Y));
+		r (Y) = ((v1(X)/v1(W)) * v2(Z))	- ((v1(Z)/v1(W)) * v2(X));
+		r (Z) = ((v1(X)/v1(W)) * v2(Y))	- ((v1(Y)/v1(W)) * v2(X));
+		r (W) = 1;
+
+		return r;
+	}
+	else if (v1.size() == VECTOR_3D && v2.size() == VECTOR_3DH) {
+		ublas::vector<float> r (VECTOR_3DH);
+
+		r (X) = (v1(Y) * (v2(Z)/v2(W)))	- (v1(Z) * (v2(Y)/v2(W)));
+		r (Y) = (v1(X) * (v2(Z)/v2(W)))	- (v1(Z) * (v2(X)/v2(W)));
+		r (Z) = (v1(X) * (v2(Y)/v2(W)))	- (v1(Y) * (v2(X)/v2(W)));
+		r (W) = 1;
+
+		return r;
+	}
+	else if (v1.size() == VECTOR_3DH && v2.size() == VECTOR_3DH) {
+		ublas::vector<float> r (VECTOR_3DH);
+
+		r (X) = ((v1(Y)/v1(W)) * (v2(Z)/v2(W)))	- ((v1(Z)/v1(W)) * (v2(Y)/v2(W)));
+		r (Y) = ((v1(X)/v1(W)) * (v2(Z)/v2(W)))	- ((v1(Z)/v1(W)) * (v2(X)/v2(W)));
+		r (Z) = ((v1(X)/v1(W)) * (v2(Y)/v2(W)))	- ((v1(Y)/v1(W)) * (v2(X)/v2(W)));
+		r (W) = 1;
+
+		return r;
+	}
+
+}
+
+float dotProductVectors(ublas::vector<float> v1, ublas::vector<float> v2) {
+	
+	float r;
+	
+	if (v1.size() == VECTOR_3D && v2.size() == VECTOR_3D) {
+		r = (v1(X) * v2(X)) + (v1(Y) * v2(Y)) + (v1(Z) * v2(Z));  		
+	}
+	else if (v1.size() == VECTOR_3DH && v2.size() == VECTOR_3D) {
+		r = ((v1 (X) / v1 (W)) * v2 (X)) 
+				+ ((v1 (Y) / v1 (W)) * v2 (Y)) 
+				+ ((v1 (Z) / v1 (W)) * v2 (Z));
+	}
+	else if (v1.size() == VECTOR_3D && v2.size() == VECTOR_3DH) {
+		r  = (v1(X) * (v2 (X) / v2 (W))) 
+				+ (v1(Y) * (v2 (Y) / v2 (W))) 
+				+ (v1(Z) * (v2 (Z) / v2 (W)));
+	}
+	else if (v1.size() == VECTOR_3DH && v2.size() == VECTOR_3DH) {
+		r = ((v1 (X) / v1 (W)) * (v2 (X) / v2 (W)))
+				 + ((v1 (Y) / v1 (W)) * (v2 (Y) / v2 (W)))
+				 + ((v1 (Z) / v1 (W)) *(v2 (Z) / v2 (W)));
+	}
+
+	return r;
+}
+
 Material::Material() {
 	name = "Default";
 	
@@ -116,6 +186,10 @@ float Material::getSpecularBlue() {
 	return ks(BLUE);
 }
 
+float Material::getSpecularAlpha() {
+	return ks(ALPHA);
+}
+
 Face::Face(const ublas::vector<float>& v1, 
 			const ublas::vector<float>& v2, 
 			const ublas::vector<float>& v3) {
@@ -139,14 +213,7 @@ ublas::vector<float> Face::getNormal() {
 	ublas::vector<float> e1 = p2 - p1;
 	ublas::vector<float> e2 = p3 - p2;
 
-	ublas::vector<float> n (VECTOR_3DH);
-
-	n (X) = ((e2(Y)/e2(W)) * (e1(Z)/e1(W)))	- ((e2(Z)/e2(W)) * (e1(Y)/e1(W)));
-	n (Y) = ((e2(X)/e2(W)) * (e1(Z)/e1(W)))	- ((e2(Z)/e2(W)) * (e1(X)/e1(W)));
-	n (Z) = ((e2(X)/e2(W)) * (e1(Y)/e1(W)))	- ((e2(Y)/e2(W)) * (e1(X)/e1(W)));
-	n (W) = 1;
-
-	return n;
+	return crossProductVectors(e2, e1);
 }
 
 bool Face::isOnFace(ublas::vector<float> p) {
@@ -183,14 +250,14 @@ float Sphere::getRadiusSquared() {
 	return radius * radius;
 }
 
-float Sphere::getDistanceToVPN(ublas::vector<float> vpn) {
+float Sphere::getDistanceToPixel(ublas::vector<float> pixel) {
 	ublas::vector<float> t;
-	if (vpn (Z) > originWorldCoord (Z)) {
-		t = subtractVectors(originWorldCoord, vpn);
-	}
-	else {
-		t = subtractVectors(vpn, originWorldCoord);
-	}
+	//if (vpn (Z) > originWorldCoord (Z)) {
+		t = originWorldCoord - pixel;
+	//}
+	//else {
+	//	t = subtractVectors(vpn, originWorldCoord);
+	//}
 	return norm_2(t);
 }
 
@@ -245,37 +312,23 @@ int Light::getBlue() {
 	color(BLUE);
 }
 
-Ray::Ray(ublas::vector<float> prp) {
+Ray::Ray(ublas::vector<float> prp, ublas::vector<float> vppc, int x, int y) {
 	focusWorldCoord = prp;
-}
-
-void Ray::setScreenX(int x) {
+	pixelWorldCoord = vppc;
 	screenX = x;
+	screenY = y;
 }
 
 int Ray::getScreenX() {
 	return screenX;
 }
 
-void Ray::setScreenY(int y) {
-	screenY = y;
-}
-
 int Ray::getScreenY() {
 	return screenY;
 }
 
-//TODO: this should take different params see comment in header.
-void Ray::setPixelWorldCoord(ublas::vector<float> l) {
-	pixelWorldCoord = l;
-}
-
 ublas::vector<float> Ray::getPixelWorldCoord() {
 	return pixelWorldCoord;
-}
-
-void Ray::setPRP(ublas::vector<float> prp) {
-	focusWorldCoord = prp;
 }
 
 ublas::vector<float> Ray::getPRP() {
@@ -284,7 +337,7 @@ ublas::vector<float> Ray::getPRP() {
 
 //v = L - E, L is pixel of view plane, E is PRP
 ublas::vector<float> Ray::rayVector() {
-	return getPixelWorldCoord() - getPRP(); 
+	return getPixelWorldCoord() -  getPRP(); 
 } 	
 
 // ||v|| = sqrt( (v1)^2 + (v2)^2 +...+(vn)^2 )
@@ -304,16 +357,19 @@ ublas::vector<float> Ray::unitVectorScaled(float s) {
 	
 // R(s) = L + sU,  L is pixel of view plane.
 ublas::vector<float> Ray::paraPos(float s) {
-	return ( getPixelWorldCoord() + unitVectorScaled(s) );
+	return getPRP() + unitVectorScaled(s);
 }
 
 Camera::Camera(std::string n, ublas::vector<float> prp,
-				 ublas::vector<float> vpn, float nc, float fc) {
+				 ublas::vector<float> vpn, ublas::vector<float> vup,
+				 float nc, float fc) {
 	name = n;
 	focusWorldCoord = prp;
-	viewPlaneWorldCoord = vpn;
+	viewPlaneNormal = vpn;
+	vectorUp = vup;
 	nearClip = nc;
 	farClip = fc;
+	viewPlaneWorldCoord = prp - (nearClip * vpn);
 }
 
 std::string Camera::getName() {
@@ -324,8 +380,16 @@ ublas::vector<float> Camera::getPRP() {
 	return focusWorldCoord;
 }
 
-ublas::vector<float> Camera::getVPN() {
+ublas::vector<float> Camera::getVRP() {
 	return viewPlaneWorldCoord;
+}
+
+ublas::vector<float> Camera::getVPN() {
+	return viewPlaneNormal;
+}
+
+ublas::vector<float> Camera::getVUP() {
+	return vectorUp;
 }
 
 float Camera::getNearClip() {

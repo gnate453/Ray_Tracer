@@ -38,7 +38,10 @@ namespace ublas = boost::numeric::ublas;
 #define COLOR_VALUES 256
 #define AMB_LIGHT 20.0
 #define DIFFUSE_FACT 0.00001
+#define SPECULAR_FACT 0.001
+#define SPECULAR_REDUCT 100
 #define ZERO 0
+#define ZERO_F 0.0
 #define BEGIN 0
 #define LENGTH_1 1
 #define LENGTH_2 2
@@ -47,6 +50,9 @@ namespace ublas = boost::numeric::ublas;
 
 
 ublas::vector<float> subtractVectors(ublas::vector<float> v1, ublas::vector<float> v2);
+ublas::vector<float> crossProductVectors(ublas::vector<float> v1, ublas::vector<float> v2);
+float dotProductVectors(ublas::vector<float> v1, ublas::vector<float> v2);
+
 
 class Material {
 	private:
@@ -72,7 +78,7 @@ class Material {
 	float getSpecularRed();
 	float getSpecularGreen();
 	float getSpecularBlue();
-
+	float getSpecularAlpha();
 };
 
 class Face {
@@ -103,7 +109,7 @@ class Sphere {
 	ublas::vector<float> getOrigin();
 	float getRadius();
 	float getRadiusSquared();
-	float getDistanceToVPN(ublas::vector<float>);
+	float getDistanceToPixel(ublas::vector<float>);
 
 };
 
@@ -138,23 +144,19 @@ class Light {
 
 class Ray {
 	private:
-	//world Coordinate of the Pixel this ray colors.
+	//world Coordinate of the Pixel this ray colors. (L)
 	ublas::vector<float> pixelWorldCoord;
-	//world Coordinate of the PRP or foucas point.		
+	//world Coordinate of the PRP or foucas point. (E)	
 	ublas::vector<float> focusWorldCoord;
 	int screenX;
 	int screenY;		
 
 	public:
-	Ray(ublas::vector<float>);
-	void setScreenX(int);
+	Ray(ublas::vector<float>, ublas::vector<float>, int, int);
 	int getScreenX();
-	void setScreenY(int);
 	int getScreenY();
 	//TODO: set world coord should take the vup, and use d, ax, by to calculte world coordinate.
-	void setPixelWorldCoord(ublas::vector<float>);
 	ublas::vector<float> getPixelWorldCoord();
-	void setPRP(ublas::vector<float>);
 	ublas::vector<float> getPRP();
 	ublas::vector<float> rayVector(); //v = L - E, L is pixel of view plane, E is PRP
 	float norm();// ||v|| = sqrt( (v1)^2 + (v2)^2 +...+(vn)^2 )
@@ -170,14 +172,18 @@ class Camera {
 	std::string name;
 	ublas::vector<float> focusWorldCoord;
 	ublas::vector<float> viewPlaneWorldCoord;
+	ublas::vector<float> vectorUp;
+	ublas::vector<float> viewPlaneNormal; 
 	float nearClip;
 	float farClip;
 	
 	public:
-	Camera(std::string, ublas::vector<float>, ublas::vector<float>, float, float);
+	Camera(std::string, ublas::vector<float>, ublas::vector<float>, ublas::vector<float>, float, float);
 	std::string getName();
 	ublas::vector<float> getPRP();
+	ublas::vector<float> getVRP();
 	ublas::vector<float> getVPN();
+	ublas::vector<float> getVUP();
 	float getNearClip();
 	float getFarClip();
 
