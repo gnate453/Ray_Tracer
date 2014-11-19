@@ -13,8 +13,6 @@
 namespace ublas = boost::numeric::ublas;
 #endif /*namespace alias for boost uBLAS*/
 
-#define VECTOR_2D 2
-#define VECTOR_3D 3
 #define VECTOR_2DH 3
 #define VECTOR_3DH 4
 #define	VECTOR_C 4
@@ -39,7 +37,7 @@ namespace ublas = boost::numeric::ublas;
 #define AMB_LIGHT 20.0
 #define DIFFUSE_FACT 0.00001
 #define SPECULAR_FACT 0.001
-#define SPECULAR_REDUCT 100
+#define SPECULAR_REDUCT 0.0001 
 #define ZERO 0
 #define ZERO_F 0.0
 #define BEGIN 0
@@ -49,9 +47,7 @@ namespace ublas = boost::numeric::ublas;
 #define LENGTH_7 7
 
 
-ublas::vector<float> subtractVectors(ublas::vector<float> v1, ublas::vector<float> v2);
 ublas::vector<float> crossProductVectors(ublas::vector<float> v1, ublas::vector<float> v2);
-float dotProductVectors(ublas::vector<float> v1, ublas::vector<float> v2);
 
 
 class Material {
@@ -120,10 +116,14 @@ class Polygon {
 	std::list<Face> faces;
 
 	public:
+	//Polygon(const Polygon&);
 	Polygon(const std::string&, const Material&, std::list<Face>);
-	std::string getName();
+	//Polygon operator=(Polygon);
+	//void copyFaces(std::list<Face>);
+	std::string getName();	
 	Material getColor(); 
 	std::list<Face> getFaces();
+	
 };
 
 class Light {
@@ -146,15 +146,21 @@ class Ray {
 	private:
 	//world Coordinate of the Pixel this ray colors. (L)
 	ublas::vector<float> pixelWorldCoord;
+	//direction vector of the ray;
+	ublas::vector<float> r;
 	//world Coordinate of the PRP or foucas point. (E)	
 	ublas::vector<float> focusWorldCoord;
 	int screenX;
-	int screenY;		
+	int screenY;
+	float alpha;
+	float beta;
 
 	public:
-	Ray(ublas::vector<float>, ublas::vector<float>, int, int);
+	Ray(ublas::vector<float>, ublas::vector<float>, ublas::vector<float>, int, int, float, float);
 	int getScreenX();
 	int getScreenY();
+	float getAlpha();
+	float getBeta();
 	//TODO: set world coord should take the vup, and use d, ax, by to calculte world coordinate.
 	ublas::vector<float> getPixelWorldCoord();
 	ublas::vector<float> getPRP();
@@ -173,7 +179,9 @@ class Camera {
 	ublas::vector<float> focusWorldCoord;
 	ublas::vector<float> viewPlaneWorldCoord;
 	ublas::vector<float> vectorUp;
-	ublas::vector<float> viewPlaneNormal; 
+	ublas::vector<float> viewPlaneNormal;
+	ublas::vector<float> horizontalAxis;
+	ublas::vector<float> verticalAxis;
 	float nearClip;
 	float farClip;
 	
@@ -184,6 +192,8 @@ class Camera {
 	ublas::vector<float> getVRP();
 	ublas::vector<float> getVPN();
 	ublas::vector<float> getVUP();
+	ublas::vector<float> getHorizontalVector();
+	ublas::vector<float> getVerticalVector();
 	float getNearClip();
 	float getFarClip();
 

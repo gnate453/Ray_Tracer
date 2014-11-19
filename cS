@@ -1,0 +1,8 @@
+#Camera specifications
+c cam01 0 0 2.5 0 0 1 0 1 0 4 50
+#light sources
+l 10 10 20 1 0 255 0
+l 7 7 20 1 0 0 170
+#l 4 4 20 1 255 0 0
+#ray cast command
+r HD 2560 1600 1

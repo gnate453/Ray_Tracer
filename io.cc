@@ -116,6 +116,7 @@ void outputImages(std::list<Image> imgs) {
 
 		colorOut.close();
 		depthOut.close();
-	}	
-
+	}
+	
+	imgs.clear();
 }

@@ -1,103 +1,33 @@
 #include "objects.h"
 
-ublas::vector<float> subtractVectors(ublas::vector<float> v1, ublas::vector<float> v2) {
-	if (v1.size() == VECTOR_3D && v2.size() == VECTOR_3D) {
-		return v1 - v2;
-	}
-	else if (v1.size() == VECTOR_3DH && v2.size() == VECTOR_3D) {
-		ublas::vector<float> r (VECTOR_3DH);
-		r (X) = (v1 (X) / v1 (W)) - v2 (X);
-		r (Y) = (v1 (Y) / v1 (W)) - v2 (Y);
-		r (Z) = (v1 (Z) / v1 (W)) - v2 (Z);
-		r (W) = 1.0; 
-		return r;
-	}
-	else if (v1.size() == VECTOR_3D && v2.size() == VECTOR_3DH) {
-		ublas::vector<float> r (VECTOR_3DH);
-		r (X) = v1 (X) - (v2 (X) / v2 (W));
-		r (Y) = v1 (Y) - (v2 (Y) / v2 (W));
-		r (Z) = v1 (Z) - (v2 (Z) / v2 (W));
-		r (W) = 1.0; 
-		return r;
-	}
-	else if (v1.size() == VECTOR_3DH && v2.size() == VECTOR_3DH) {
-		ublas::vector<float> r (VECTOR_3DH);
-		r (X) = (v1 (X) / v1 (W)) - (v2 (X) / v2 (W));
-		r (Y) = (v1 (Y) / v1 (W)) - (v2 (Y) / v2 (W));
-		r (Z) = (v1 (Z) / v1 (W)) - (v2 (Z) / v2 (W));
-		r (W) = 1.0; 
-		return r;
-	}
-
-}
-
-ublas::vector<float> crossProductVectors(ublas::vector<float> v1, ublas::vector<float> v2) {	
-
-	if (v1.size() == VECTOR_3D && v2.size() == VECTOR_3D) {
-		ublas::vector<float> r (VECTOR_3D);
-
-		r (X) = (v1(Y) * v2(Z))	- (v1(Z) * v2(Y));
-		r (Y) = (v1(X) * v2(Z))	- (v1(Z) * v2(X));
-		r (Z) = (v1(X) * v2(Y))	- (v1(Y) * v2(X));
-
-		return r;
-	}
-	else if (v1.size() == VECTOR_3DH && v2.size() == VECTOR_3D) {
-		ublas::vector<float> r (VECTOR_3DH);
-
-		r (X) = ((v1(Y)/v1(W)) * v2(Z))	- ((v1(Z)/v1(W)) * v2(Y));
-		r (Y) = ((v1(X)/v1(W)) * v2(Z))	- ((v1(Z)/v1(W)) * v2(X));
-		r (Z) = ((v1(X)/v1(W)) * v2(Y))	- ((v1(Y)/v1(W)) * v2(X));
-		r (W) = 1;
-
-		return r;
-	}
-	else if (v1.size() == VECTOR_3D && v2.size() == VECTOR_3DH) {
-		ublas::vector<float> r (VECTOR_3DH);
-
-		r (X) = (v1(Y) * (v2(Z)/v2(W)))	- (v1(Z) * (v2(Y)/v2(W)));
-		r (Y) = (v1(X) * (v2(Z)/v2(W)))	- (v1(Z) * (v2(X)/v2(W)));
-		r (Z) = (v1(X) * (v2(Y)/v2(W)))	- (v1(Y) * (v2(X)/v2(W)));
-		r (W) = 1;
-
-		return r;
-	}
-	else if (v1.size() == VECTOR_3DH && v2.size() == VECTOR_3DH) {
-		ublas::vector<float> r (VECTOR_3DH);
-
+ublas::vector<float> crossProductVectors(ublas::vector<float> v1, ublas::vector<float> v2) {
+	ublas::vector<float> r (VECTOR_3DH);
+	
+	if ( v1 (W) != 0 && v2 (W) != 0) {
 		r (X) = ((v1(Y)/v1(W)) * (v2(Z)/v2(W)))	- ((v1(Z)/v1(W)) * (v2(Y)/v2(W)));
 		r (Y) = ((v1(X)/v1(W)) * (v2(Z)/v2(W)))	- ((v1(Z)/v1(W)) * (v2(X)/v2(W)));
 		r (Z) = ((v1(X)/v1(W)) * (v2(Y)/v2(W)))	- ((v1(Y)/v1(W)) * (v2(X)/v2(W)));
-		r (W) = 1;
-
-		return r;
+		r (W) = 1.0;
 	}
-
-}
-
-float dotProductVectors(ublas::vector<float> v1, ublas::vector<float> v2) {
+	else if ( v1 (W) == 0 && v2 (W) != 0) {
+		r (X) = (v1(Y) * (v2(Z)/v2(W)))	- (v1(Z) * (v2(Y)/v2(W)));
+		r (Y) = (v1(X) * (v2(Z)/v2(W)))	- (v1(Z) * (v2(X)/v2(W)));
+		r (Z) = (v1(X) * (v2(Y)/v2(W)))	- (v1(Y) * (v2(X)/v2(W)));
+		r (W) = 1.0;
+	}
+	else if ( v1 (W) != 0 && v2 (W) == 0) {
+		r (X) = ((v1(Y)/v1(W)) * v2(Z))	- ((v1(Z)/v1(W)) * v2(Y));
+		r (Y) = ((v1(X)/v1(W)) * v2(Z))	- ((v1(Z)/v1(W)) * v2(X));
+		r (Z) = ((v1(X)/v1(W)) * v2(Y))	- ((v1(Y)/v1(W)) * v2(X));
+		r (W) = 1.0;
+	}
+	else if ( v1 (W) == 0 && v2 (W) == 0) {
+		r (X) = ((v1(Y)) * v2(Z))	- ((v1(Z)) * v2(Y));
+		r (Y) = ((v1(X)) * v2(Z))	- ((v1(Z)) * v2(X));
+		r (Z) = ((v1(X)) * v2(Y))	- ((v1(Y)) * v2(X));
+		r (W) = 1.0;
+	}
 	
-	float r;
-	
-	if (v1.size() == VECTOR_3D && v2.size() == VECTOR_3D) {
-		r = (v1(X) * v2(X)) + (v1(Y) * v2(Y)) + (v1(Z) * v2(Z));  		
-	}
-	else if (v1.size() == VECTOR_3DH && v2.size() == VECTOR_3D) {
-		r = ((v1 (X) / v1 (W)) * v2 (X)) 
-				+ ((v1 (Y) / v1 (W)) * v2 (Y)) 
-				+ ((v1 (Z) / v1 (W)) * v2 (Z));
-	}
-	else if (v1.size() == VECTOR_3D && v2.size() == VECTOR_3DH) {
-		r  = (v1(X) * (v2 (X) / v2 (W))) 
-				+ (v1(Y) * (v2 (Y) / v2 (W))) 
-				+ (v1(Z) * (v2 (Z) / v2 (W)));
-	}
-	else if (v1.size() == VECTOR_3DH && v2.size() == VECTOR_3DH) {
-		r = ((v1 (X) / v1 (W)) * (v2 (X) / v2 (W)))
-				 + ((v1 (Y) / v1 (W)) * (v2 (Y) / v2 (W)))
-				 + ((v1 (Z) / v1 (W)) *(v2 (Z) / v2 (W)));
-	}
-
 	return r;
 }
 
@@ -112,7 +42,7 @@ Material::Material() {
 
 	ublas::vector<float> d (VECTOR_C);
 	d (RED) = 1.0;
-	d (GREEN) = 1.0;
+	d (GREEN) = 0.0;
 	d (BLUE) = 0.0;
 	kd = d;	
 
@@ -210,10 +140,10 @@ ublas::vector<float> Face::getVertex(int i) {
 }
 	
 ublas::vector<float> Face::getNormal() {
-	ublas::vector<float> e1 = p2 - p1;
-	ublas::vector<float> e2 = p3 - p2;
+	ublas::vector<float> e1 = p1 - p2;
+	ublas::vector<float> e2 = p2 - p3;
 
-	return crossProductVectors(e2, e1);
+	return (1/norm_2(crossProductVectors(e1, e2))) * crossProductVectors(e1, e2);
 }
 
 bool Face::isOnFace(ublas::vector<float> p) {
@@ -261,11 +191,25 @@ float Sphere::getDistanceToPixel(ublas::vector<float> pixel) {
 	return norm_2(t);
 }
 
+//Polygon::Polygon(const Polygon& c) {
+//	name = c.getName();
+//	color = c.getColor();
+//	faces = c.getFaces();
+//}
+
 Polygon::Polygon(const std::string& n, const Material& mtl, std::list<Face> f) {
 	name = n;
 	color = mtl;
 	faces = f;
 }
+
+//Polygon Polygon::operator=(Polygon rhs) {
+//	name = rhs.getName();
+//	color = rhs.getColor();
+//	faces = rhs.getFaces();
+	
+//	return *this;
+//}
 
 std::string Polygon::getName() {
 	return name;
@@ -312,11 +256,14 @@ int Light::getBlue() {
 	color(BLUE);
 }
 
-Ray::Ray(ublas::vector<float> prp, ublas::vector<float> vppc, int x, int y) {
+Ray::Ray(ublas::vector<float> prp, ublas::vector<float> rayVector, ublas::vector<float> vppc, int x, int y, float a, float b) {
 	focusWorldCoord = prp;
+	r = rayVector;
 	pixelWorldCoord = vppc;
 	screenX = x;
 	screenY = y;
+	alpha = a;
+	beta = b;
 }
 
 int Ray::getScreenX() {
@@ -325,6 +272,14 @@ int Ray::getScreenX() {
 
 int Ray::getScreenY() {
 	return screenY;
+}
+
+float Ray::getAlpha() {
+	return alpha;
+}
+
+float Ray::getBeta() {
+	return beta;
 }
 
 ublas::vector<float> Ray::getPixelWorldCoord() {
@@ -337,7 +292,7 @@ ublas::vector<float> Ray::getPRP() {
 
 //v = L - E, L is pixel of view plane, E is PRP
 ublas::vector<float> Ray::rayVector() {
-	return getPixelWorldCoord() -  getPRP(); 
+	return getPixelWorldCoord() - getPRP(); 
 } 	
 
 // ||v|| = sqrt( (v1)^2 + (v2)^2 +...+(vn)^2 )
@@ -370,6 +325,11 @@ Camera::Camera(std::string n, ublas::vector<float> prp,
 	nearClip = nc;
 	farClip = fc;
 	viewPlaneWorldCoord = prp - (nearClip * vpn);
+
+	ublas::vector<float> nVPN = ((1/norm_2(vpn)) * vpn) ;
+	horizontalAxis = (1/norm_2(crossProductVectors(vup, nVPN))) 
+										* crossProductVectors(vup, nVPN);
+	verticalAxis = crossProductVectors(nVPN, horizontalAxis);
 }
 
 std::string Camera::getName() {
@@ -390,6 +350,14 @@ ublas::vector<float> Camera::getVPN() {
 
 ublas::vector<float> Camera::getVUP() {
 	return vectorUp;
+}
+
+ublas::vector<float> Camera::getHorizontalVector() {
+	return horizontalAxis;
+}
+
+ublas::vector<float> Camera::getVerticalVector() {
+	return verticalAxis;
 }
 
 float Camera::getNearClip() {
@@ -436,60 +404,36 @@ Image::Image(const Image& c) {
 	name = c.getName();
 	width = c.getWidth();
 	height = c.getHeight();
+	
 	imgColorRed = new int [width*height];
+	imgColorGreen = new int [width*height];
+	imgColorBlue = new int [width*height];
+	imgDepthData = new int [width*height];
 	for (int i =0; i < (width*height); ++i)
 	{
 		imgColorRed[i] = c.getImgRedData()[i];
-	}
-	imgColorGreen = new int [width*height];
-
-	for (int i =0; i < (width*height); ++i)
-	{
 		imgColorGreen[i] = c.getImgGreenData()[i];
-	}
-	
-	imgColorBlue = new int [width*height];
-
-	for (int i =0; i < (width*height); ++i)
-	{
 		imgColorBlue[i] = c.getImgBlueData()[i];
-	}
-	
-	imgDepthData = new int [width*height];
-	
-	for (int i =0; i < (width*height); ++i)
-	{
 		imgDepthData[i] = c.getImgDepthData()[i];
 	}
+
 }
 
 Image Image::operator=(Image rhs) {
 	name = rhs.getName();
 	width = rhs.getWidth();
 	height = rhs.getHeight();
+	
 	imgColorRed = new int [width*height];
-	for (int i =0; i < (width*height); ++i)
-	{
-		imgColorRed[i] = rhs.getImgRedData()[i];
-	}
 	imgColorGreen = new int [width*height];
-
-	for (int i =0; i < (width*height); ++i)
-	{
-		imgColorGreen[i] = rhs.getImgGreenData()[i];
-	}
-	
 	imgColorBlue = new int [width*height];
-
-	for (int i =0; i < (width*height); ++i)
-	{
-		imgColorBlue[i] = rhs.getImgBlueData()[i];
-	}
-	
 	imgDepthData = new int [width*height];
 	
 	for (int i =0; i < (width*height); ++i)
 	{
+		imgColorRed[i] = rhs.getImgRedData()[i];
+		imgColorGreen[i] = rhs.getImgGreenData()[i];
+		imgColorBlue[i] = rhs.getImgBlueData()[i];
 		imgDepthData[i] = rhs.getImgDepthData()[i];
 	}
 
