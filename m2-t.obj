@@ -1,0 +1,8 @@
+mtllib m.mtl
+usemtl blue
+s globe1 2 2 -20.0 1.5
+usemtl orange
+s globe3 0 0 -4.2 .5
+usemtl green
+s globe2 -5 -5 -57.0 5
+

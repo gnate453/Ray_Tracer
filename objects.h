@@ -13,7 +13,8 @@
 namespace ublas = boost::numeric::ublas;
 #endif /*namespace alias for boost uBLAS*/
 
-#define VECTOR_2DH 3
+#define VECTOR_2D 2
+#define VECTOR_3D 3
 #define VECTOR_3DH 4
 #define	VECTOR_C 4
 #define MATRIX_2D 2
@@ -34,10 +35,13 @@ namespace ublas = boost::numeric::ublas;
 #define ALPHA 3
 #define COLOR_MAX 255
 #define COLOR_VALUES 256
+#define SPHERE true
+#define POLYGON false
 #define AMB_LIGHT 20.0
 #define DIFFUSE_FACT 0.00001
 #define SPECULAR_FACT 0.001
 #define SPECULAR_REDUCT 0.0001 
+#define EPSILON 0.000001
 #define ZERO 0
 #define ZERO_F 0.0
 #define BEGIN 0
@@ -277,6 +281,21 @@ class World {
 	void addVertex(ublas::vector<float>);
 	std::map<std::string, Material> getMaterials();
 	void addMaterial(std::string, Material);
+};
+
+class Intersection {
+	private:
+	float depth;
+	Material surfaceMaterial;
+	ublas::vector<float> point;
+	ublas::vector<float> normal;
+
+	public:
+	Intersection(float, ublas::vector<float>, ublas::vector<float>, Material);
+	float getDepth();
+	ublas::vector<float> getPoint();
+	ublas::vector<float> getSurfaceNormal();
+	Material getSurfaceMaterial();
 };
 
 #endif  /*define OBJS_H end */

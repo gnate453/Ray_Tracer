@@ -1,33 +1,12 @@
 #include "objects.h"
 
 ublas::vector<float> crossProductVectors(ublas::vector<float> v1, ublas::vector<float> v2) {
-	ublas::vector<float> r (VECTOR_3DH);
-	
-	if ( v1 (W) != 0 && v2 (W) != 0) {
-		r (X) = ((v1(Y)/v1(W)) * (v2(Z)/v2(W)))	- ((v1(Z)/v1(W)) * (v2(Y)/v2(W)));
-		r (Y) = ((v1(X)/v1(W)) * (v2(Z)/v2(W)))	- ((v1(Z)/v1(W)) * (v2(X)/v2(W)));
-		r (Z) = ((v1(X)/v1(W)) * (v2(Y)/v2(W)))	- ((v1(Y)/v1(W)) * (v2(X)/v2(W)));
-		r (W) = 1.0;
-	}
-	else if ( v1 (W) == 0 && v2 (W) != 0) {
-		r (X) = (v1(Y) * (v2(Z)/v2(W)))	- (v1(Z) * (v2(Y)/v2(W)));
-		r (Y) = (v1(X) * (v2(Z)/v2(W)))	- (v1(Z) * (v2(X)/v2(W)));
-		r (Z) = (v1(X) * (v2(Y)/v2(W)))	- (v1(Y) * (v2(X)/v2(W)));
-		r (W) = 1.0;
-	}
-	else if ( v1 (W) != 0 && v2 (W) == 0) {
-		r (X) = ((v1(Y)/v1(W)) * v2(Z))	- ((v1(Z)/v1(W)) * v2(Y));
-		r (Y) = ((v1(X)/v1(W)) * v2(Z))	- ((v1(Z)/v1(W)) * v2(X));
-		r (Z) = ((v1(X)/v1(W)) * v2(Y))	- ((v1(Y)/v1(W)) * v2(X));
-		r (W) = 1.0;
-	}
-	else if ( v1 (W) == 0 && v2 (W) == 0) {
-		r (X) = ((v1(Y)) * v2(Z))	- ((v1(Z)) * v2(Y));
-		r (Y) = ((v1(X)) * v2(Z))	- ((v1(Z)) * v2(X));
-		r (Z) = ((v1(X)) * v2(Y))	- ((v1(Y)) * v2(X));
-		r (W) = 1.0;
-	}
-	
+	ublas::vector<float> r (VECTOR_3D);
+
+	r (X) = ((v1(Y)) * v2(Z)) - ((v1(Z)) * v2(Y));
+	r (Y) = ((v1(X)) * v2(Z)) - ((v1(Z)) * v2(X));
+	r (Z) = ((v1(X)) * v2(Y)) - ((v1(Y)) * v2(X));
+
 	return r;
 }
 
@@ -181,14 +160,7 @@ float Sphere::getRadiusSquared() {
 }
 
 float Sphere::getDistanceToPixel(ublas::vector<float> pixel) {
-	ublas::vector<float> t;
-	//if (vpn (Z) > originWorldCoord (Z)) {
-		t = originWorldCoord - pixel;
-	//}
-	//else {
-	//	t = subtractVectors(vpn, originWorldCoord);
-	//}
-	return norm_2(t);
+	return norm_2(originWorldCoord - pixel);
 }
 
 //Polygon::Polygon(const Polygon& c) {
@@ -233,11 +205,11 @@ ublas::vector<float> Light::getDirectionVector() {
 }
 
 ublas::vector<float> Light::getUnitVector() {
-	return (1/norm()) * directionVector;
+	return (1/norm()) * getDirectionVector();
 }
 
 float Light::norm() {
-	return norm_2(directionVector);
+	return norm_2(getDirectionVector());
 }
 
 ublas::vector<int> Light::getColor() {
@@ -292,7 +264,7 @@ ublas::vector<float> Ray::getPRP() {
 
 //v = L - E, L is pixel of view plane, E is PRP
 ublas::vector<float> Ray::rayVector() {
-	return getPixelWorldCoord() - getPRP(); 
+	return r; 
 } 	
 
 // ||v|| = sqrt( (v1)^2 + (v2)^2 +...+(vn)^2 )
@@ -590,3 +562,27 @@ std::map<std::string, Material> World::getMaterials() {
 void World::addMaterial(std::string n, Material mtl) {
 	materials [n] =  mtl;
 }
+
+Intersection::Intersection(float d, ublas::vector<float> p, ublas::vector<float> n, Material m) {
+	depth = d;
+	point = p;
+	normal = n;
+	surfaceMaterial = m;
+}
+
+float Intersection::getDepth() {
+	return depth;
+}
+
+ublas::vector<float> Intersection::getPoint() {
+	return point;
+}
+
+ublas::vector<float> Intersection::getSurfaceNormal() {
+	return normal;
+}
+
+Material Intersection::getSurfaceMaterial() {
+	return surfaceMaterial;
+}
+
