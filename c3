@@ -1,5 +1,5 @@
 #Camera specifications
-c cam01 0 0 2 0 0 1 0 1 0 4 50
+c cam01 0 0 0 0 0 1 0 1 0 4 50
 #light sources
 l 10 10 20 1 0 255 0
 #ray cast command

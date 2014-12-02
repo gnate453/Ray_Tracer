@@ -383,7 +383,7 @@ Intersection intersectRayWithSpheres(Ray ray, std::list<Sphere> spheres, Camera 
 		dsqd = s->getRadiusSquared() - (csqd - (v * v));
 
 		//std::cout<<" r^2: "<<s->getRadiusSquared()<<" c^2: "<<csqd<<" v^2: "<<v*v<<std::endl;
-		if (dsqd >= 0) {
+		if (dsqd > 0) {
 			float d = std::sqrt(dsqd);
 			//std::cout<<"  d^2: "<<dsqd<<" d: "<<d<<"\n"<<std::endl;
 			//normal to sphere
@@ -425,7 +425,7 @@ Intersection intersectRayWithPolygons(Ray ray, std::list<Polygon> polygons, Came
 			ublas::vector<float> e1 = f->getVertex(P_TWO) - f->getVertex(P_ONE);
 			ublas::vector<float> e2 = f->getVertex(P_THREE) - f->getVertex(P_ONE);
 			
-			ublas::vector<float> prod = crossProductVectors(U, e2);
+			ublas::vector<float> prod = crossProductVectors(e2, U);
 
 			float det = inner_prod(e1, prod);
 			
@@ -436,7 +436,7 @@ Intersection intersectRayWithPolygons(Ray ray, std::list<Polygon> polygons, Came
 				float u = inner_prod(T, prod) * det;
 
 				if ( 0.0 <= u && u <= 1.0) {
-					ublas::vector<float> Q = crossProductVectors(T, e1);
+					ublas::vector<float> Q = crossProductVectors(e1, T);
 
 					float v = inner_prod(U, Q) * det;
 					if ( 0.0 <= v && u+v <= 1.0) {
@@ -488,9 +488,9 @@ ublas::vector<float> calcPixelColor(Ray ray, ublas::vector<float> point, ublas::
 		fg = 0;
 		fb = 0;
 		if (cosPhi <= 0) {
-			fr = SPECULAR_REDUCT * l->getRed() * surfaceMaterial.getSpecularRed() * phong;
-			fg = SPECULAR_REDUCT * l->getGreen() * surfaceMaterial.getSpecularGreen() * phong;
-			fb = SPECULAR_REDUCT * l->getBlue() * surfaceMaterial.getSpecularBlue() * phong;
+			fr = SPECULAR_REDUCT *  l->getRed() * surfaceMaterial.getSpecularRed() * phong;
+			fg = SPECULAR_REDUCT *  l->getGreen() * surfaceMaterial.getSpecularGreen() * phong;
+			fb = SPECULAR_REDUCT *  l->getBlue() * surfaceMaterial.getSpecularBlue() * phong;
 
 			if (fr > 0)	
 				sr += (int) fr;
