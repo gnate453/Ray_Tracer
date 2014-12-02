@@ -28,7 +28,7 @@ World worldFromString(std::string d) {
 				v(Z) = v(Z)/n;
 			}
 
-			//std::cout<<"v: "<<v<<std::endl;			
+			std::cout<<"v: "<<v<<std::endl;			
 
 			newWorld.addVertex(v);
 		}
@@ -54,9 +54,9 @@ World worldFromString(std::string d) {
 							newWorld.getVertices()[b], 
 							newWorld.getVertices()[c]);
 				facesInGroup.push_back(cFace);
-				//std::cout<<"f: "<<newWorld.getVertices()[a]<< 
-				//			newWorld.getVertices()[b]<< 
-				//			newWorld.getVertices()[c]<<std::endl;			
+				std::cout<<"f: "<<newWorld.getVertices()[a]<< 
+							newWorld.getVertices()[b]<< 
+							newWorld.getVertices()[c]<<std::endl;			
 			}
 			else {
 				int a = points.front() - 1;
@@ -70,9 +70,9 @@ World worldFromString(std::string d) {
 								newWorld.getVertices()[b], 
 								newWorld.getVertices()[c]);
 					facesInGroup.push_back(cFace);
-					//std::cout<<"f: "<<newWorld.getVertices()[a]<< 
-					//			newWorld.getVertices()[b]<< 
-					//			newWorld.getVertices()[c]<<std::endl;			
+					std::cout<<"f: "<<newWorld.getVertices()[a]<< 
+								newWorld.getVertices()[b]<< 
+								newWorld.getVertices()[c]<<std::endl;			
 				}
 			}
 			

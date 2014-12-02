@@ -119,8 +119,8 @@ ublas::vector<float> Face::getVertex(int i) {
 }
 	
 ublas::vector<float> Face::getNormal() {
-	ublas::vector<float> e1 = p1 - p2;
-	ublas::vector<float> e2 = p2 - p3;
+	ublas::vector<float> e1 = p2 - p1;
+	ublas::vector<float> e2 = p3 - p1;
 
 	return (1/norm_2(crossProductVectors(e1, e2))) * crossProductVectors(e1, e2);
 }
