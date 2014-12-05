@@ -120,9 +120,10 @@ ublas::vector<float> Face::getVertex(int i) {
 	
 ublas::vector<float> Face::getNormal() {
 	ublas::vector<float> e1 = p2 - p1;
-	ublas::vector<float> e2 = p3 - p1;
+	ublas::vector<float> e2 = p3 - p2;
 
-	return (1/norm_2(crossProductVectors(e1, e2))) * crossProductVectors(e1, e2);
+	//return (1/norm_2(crossProductVectors(e1, e2))) * crossProductVectors(e1, e2);
+	return crossProductVectors(e1, e2);
 }
 
 bool Face::isOnFace(ublas::vector<float> p) {
