@@ -10,7 +10,7 @@ int main(int argc, char** argv) {
 	
 	if (argc < 3 || argc < 3)
 	{
-		std::cerr<<"Usage: \n HW3 <.obj> <command>"<<std::endl;
+		std::cerr<<"Usage: \n HW5 <.obj> <command>"<<std::endl;
 		return 1;
 	}
 

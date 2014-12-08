@@ -1,7 +1,7 @@
 #include "objects.h"
 
-ublas::vector<float> crossProductVectors(ublas::vector<float> v1, ublas::vector<float> v2) {
-	ublas::vector<float> r (VECTOR_3D);
+ublas::vector<double> crossProductVectors(ublas::vector<double> v1, ublas::vector<double> v2) {
+	ublas::vector<double> r (VECTOR_3D);
 
 	r (X) = ((v1(Y)) * v2(Z)) - ((v1(Z)) * v2(Y));
 	r (Y) = ((v1(X)) * v2(Z)) - ((v1(Z)) * v2(X));
@@ -13,19 +13,19 @@ ublas::vector<float> crossProductVectors(ublas::vector<float> v1, ublas::vector<
 Material::Material() {
 	name = "Default";
 	
-	ublas::vector<float> a (VECTOR_C);
+	ublas::vector<double> a (VECTOR_C);
 	a (RED) = 1.0;
 	a (GREEN) = 1.0;
 	a (BLUE) = 0.0;
 	ka = a;	
 
-	ublas::vector<float> d (VECTOR_C);
+	ublas::vector<double> d (VECTOR_C);
 	d (RED) = 1.0;
 	d (GREEN) = 0.0;
 	d (BLUE) = 0.0;
 	kd = d;	
 
-	ublas::vector<float> s (VECTOR_C);
+	ublas::vector<double> s (VECTOR_C);
 	s (RED) = 1.0;
 	s (GREEN) = 1.0;
 	s (BLUE) = 0.0;
@@ -33,81 +33,81 @@ Material::Material() {
 	ks = s;	
 }
 
-Material::Material(const std::string& n, const ublas::vector<float>& c) {
+Material::Material(const std::string& n, const ublas::vector<double>& c) {
 	name = n;
 	ka = c;
 	kd = c;
 	ks = c;
 }
 
-Material::Material(const std::string& n, const ublas::vector<float>& a, const ublas::vector<float>& d, const ublas::vector<float>& s) {
+Material::Material(const std::string& n, const ublas::vector<double>& a, const ublas::vector<double>& d, const ublas::vector<double>& s) {
 	name = n;
 	ka = a;
 	kd = d;
 	ks = s;
 }
 
-ublas::vector<float> Material::getAmbientProperties() {
+ublas::vector<double> Material::getAmbientProperties() {
 	return ka;
 }
 
-float Material::getAmbientRed() {
+double Material::getAmbientRed() {
 	return ka(RED);
 }
 
-float Material::getAmbientGreen() {
+double Material::getAmbientGreen() {
 	return ka(GREEN);
 }
 
-float Material::getAmbientBlue() {
+double Material::getAmbientBlue() {
 	return ka(BLUE);
 }
 
-ublas::vector<float> Material::getDiffuseProperties() {
+ublas::vector<double> Material::getDiffuseProperties() {
 	return kd;
 }
 
-float Material::getDiffuseRed() {
+double Material::getDiffuseRed() {
 	return kd(RED);
 }
 
-float Material::getDiffuseGreen() {
+double Material::getDiffuseGreen() {
 	return kd(GREEN);
 }
 
-float Material::getDiffuseBlue() {
+double Material::getDiffuseBlue() {
 	return kd(BLUE);
 }
 
-ublas::vector<float> Material::getSpecularProperties() {
+ublas::vector<double> Material::getSpecularProperties() {
 	return ks;
 }
 
-float Material::getSpecularRed() {
+double Material::getSpecularRed() {
 	return ks(RED);
 }
 
-float Material::getSpecularGreen() {
+double Material::getSpecularGreen() {
 	return ks(GREEN);
 }
 
-float Material::getSpecularBlue() {
+double Material::getSpecularBlue() {
 	return ks(BLUE);
 }
 
-float Material::getSpecularAlpha() {
+double Material::getSpecularAlpha() {
 	return ks(ALPHA);
 }
 
-Face::Face(const ublas::vector<float>& v1, 
-			const ublas::vector<float>& v2, 
-			const ublas::vector<float>& v3) {
+Face::Face(const ublas::vector<double>& v1, 
+			const ublas::vector<double>& v2, 
+			const ublas::vector<double>& v3) {
 	p1 = v1;
 	p2 = v2;
 	p3 = v3;
 }
 
-ublas::vector<float> Face::getVertex(int i) {
+ublas::vector<double> Face::getVertex(int i) {
 	switch (i) {
 	case P_ONE :
 		return p1;
@@ -118,22 +118,22 @@ ublas::vector<float> Face::getVertex(int i) {
 	}
 }
 	
-ublas::vector<float> Face::getNormal() {
-	ublas::vector<float> e1 = p2 - p1;
-	ublas::vector<float> e2 = p3 - p2;
+ublas::vector<double> Face::getNormal() {
+	ublas::vector<double> e1 = p2 - p1;
+	ublas::vector<double> e2 = p3 - p2;
 
-	//return (1/norm_2(crossProductVectors(e1, e2))) * crossProductVectors(e1, e2);
-	return crossProductVectors(e1, e2);
+	return (1/norm_2(crossProductVectors(e2, e1))) * crossProductVectors(e2, e1);
+	//return crossProductVectors(e1, e2);
 }
 
-bool Face::isOnFace(ublas::vector<float> p) {
+bool Face::isOnFace(ublas::vector<double> p) {
 	if (inner_prod(getNormal(), p) == 0)
 		return true;
 	else 
 		return false;	
 }
 
-Sphere::Sphere(const std::string& n, const Material& mtl, const ublas::vector<float>& o,const float &r) {
+Sphere::Sphere(const std::string& n, const Material& mtl, const ublas::vector<double>& o,const double &r) {
 	name = n;
 	color = mtl;
 	originWorldCoord = o;
@@ -148,19 +148,19 @@ Material Sphere::getColor() {
 	return color;
 }
 
-ublas::vector<float> Sphere::getOrigin(){
+ublas::vector<double> Sphere::getOrigin(){
 	return originWorldCoord;
 }
 
-float Sphere::getRadius() {
+double Sphere::getRadius() {
 	return radius;
 }
 
-float Sphere::getRadiusSquared() {
+double Sphere::getRadiusSquared() {
 	return radius * radius;
 }
 
-float Sphere::getDistanceToPixel(ublas::vector<float> pixel) {
+double Sphere::getDistanceToPixel(ublas::vector<double> pixel) {
 	return norm_2(originWorldCoord - pixel);
 }
 
@@ -196,21 +196,21 @@ std::list<Face> Polygon::getFaces() {
 	return faces;
 }
 
-Light::Light( ublas::vector<float> dir, ublas::vector<float> l) {
+Light::Light( ublas::vector<double> dir, ublas::vector<double> l) {
 	directionVector = dir;
 	color = l; 
 }
 
-ublas::vector<float> Light::getDirectionVector() {
-	return directionVector;
+ublas::vector<double> Light::getDirectionVector(ublas::vector<double> p) {
+	return directionVector - p ;
 }
 
-ublas::vector<float> Light::getUnitVector() {
-	return (1/norm()) * getDirectionVector();
+ublas::vector<double> Light::getUnitVector(ublas::vector<double> p) {
+	return (1/norm(p)) * getDirectionVector(p);
 }
 
-float Light::norm() {
-	return norm_2(getDirectionVector());
+double Light::norm(ublas::vector<double> p) {
+	return norm_2(getDirectionVector(p));
 }
 
 ublas::vector<int> Light::getColor() {
@@ -229,7 +229,7 @@ int Light::getBlue() {
 	color(BLUE);
 }
 
-Ray::Ray(ublas::vector<float> prp, ublas::vector<float> rayVector, ublas::vector<float> vppc, int x, int y, float a, float b) {
+Ray::Ray(ublas::vector<double> prp, ublas::vector<double> rayVector, ublas::vector<double> vppc, int x, int y, double a, double b) {
 	focusWorldCoord = prp;
 	r = rayVector;
 	pixelWorldCoord = vppc;
@@ -247,50 +247,50 @@ int Ray::getScreenY() {
 	return screenY;
 }
 
-float Ray::getAlpha() {
+double Ray::getAlpha() {
 	return alpha;
 }
 
-float Ray::getBeta() {
+double Ray::getBeta() {
 	return beta;
 }
 
-ublas::vector<float> Ray::getPixelWorldCoord() {
+ublas::vector<double> Ray::getPixelWorldCoord() {
 	return pixelWorldCoord;
 }
 
-ublas::vector<float> Ray::getPRP() {
+ublas::vector<double> Ray::getPRP() {
 	return focusWorldCoord;			
 }
 
 //v = L - E, L is pixel of view plane, E is PRP
-ublas::vector<float> Ray::rayVector() {
+ublas::vector<double> Ray::rayVector() {
 	return r; 
 } 	
 
 // ||v|| = sqrt( (v1)^2 + (v2)^2 +...+(vn)^2 )
-float Ray::norm() {
+double Ray::norm() {
 	return norm_2(rayVector());
 }
 
 // U = (v/||v||)
-ublas::vector<float> Ray::unitVector() {
+ublas::vector<double> Ray::unitVector() {
 	return ( (1/norm()) * rayVector() );
 }		
 
 //sU	
-ublas::vector<float> Ray::unitVectorScaled(float s) {
+ublas::vector<double> Ray::unitVectorScaled(double s) {
 	return (s * unitVector());
 }	
 	
 // R(s) = L + sU,  L is pixel of view plane.
-ublas::vector<float> Ray::paraPos(float s) {
+ublas::vector<double> Ray::paraPos(double s) {
 	return getPRP() + unitVectorScaled(s);
 }
 
-Camera::Camera(std::string n, ublas::vector<float> prp,
-				 ublas::vector<float> vpn, ublas::vector<float> vup,
-				 float nc, float fc) {
+Camera::Camera(std::string n, ublas::vector<double> prp,
+				 ublas::vector<double> vpn, ublas::vector<double> vup,
+				 double nc, double fc) {
 	name = n;
 	focusWorldCoord = prp;
 	viewPlaneNormal = vpn;
@@ -299,7 +299,7 @@ Camera::Camera(std::string n, ublas::vector<float> prp,
 	farClip = fc;
 	viewPlaneWorldCoord = prp - (nearClip * vpn);
 
-	ublas::vector<float> nVPN = ((1/norm_2(vpn)) * vpn) ;
+	ublas::vector<double> nVPN = ((1/norm_2(vpn)) * vpn) ;
 	horizontalAxis = (1/norm_2(crossProductVectors(vup, nVPN))) 
 										* crossProductVectors(vup, nVPN);
 	verticalAxis = crossProductVectors(nVPN, horizontalAxis);
@@ -309,35 +309,35 @@ std::string Camera::getName() {
 	return name;
 }
 	
-ublas::vector<float> Camera::getPRP() {
+ublas::vector<double> Camera::getPRP() {
 	return focusWorldCoord;
 }
 
-ublas::vector<float> Camera::getVRP() {
+ublas::vector<double> Camera::getVRP() {
 	return viewPlaneWorldCoord;
 }
 
-ublas::vector<float> Camera::getVPN() {
+ublas::vector<double> Camera::getVPN() {
 	return viewPlaneNormal;
 }
 
-ublas::vector<float> Camera::getVUP() {
+ublas::vector<double> Camera::getVUP() {
 	return vectorUp;
 }
 
-ublas::vector<float> Camera::getHorizontalVector() {
+ublas::vector<double> Camera::getHorizontalVector() {
 	return horizontalAxis;
 }
 
-ublas::vector<float> Camera::getVerticalVector() {
+ublas::vector<double> Camera::getVerticalVector() {
 	return verticalAxis;
 }
 
-float Camera::getNearClip() {
+double Camera::getNearClip() {
 	return nearClip;
 }
 
-float Camera::getFarClip() {
+double Camera::getFarClip() {
 	return farClip;
 }
 
@@ -548,11 +548,11 @@ void World::addLight(Light l) {
 	lights.push_back(l);
 }
 
-std::map<size_t, ublas::vector<float> > World::getVertices() {
+std::map<size_t, ublas::vector<double> > World::getVertices() {
 	return vertices;
 }
 
-void World::addVertex(ublas::vector<float> v) {
+void World::addVertex(ublas::vector<double> v) {
 	vertices [vertices.size()] = v;
 }
 
@@ -564,22 +564,22 @@ void World::addMaterial(std::string n, Material mtl) {
 	materials [n] =  mtl;
 }
 
-Intersection::Intersection(float d, ublas::vector<float> p, ublas::vector<float> n, Material m) {
+Intersection::Intersection(double d, ublas::vector<double> p, ublas::vector<double> n, Material m) {
 	depth = d;
 	point = p;
 	normal = n;
 	surfaceMaterial = m;
 }
 
-float Intersection::getDepth() {
+double Intersection::getDepth() {
 	return depth;
 }
 
-ublas::vector<float> Intersection::getPoint() {
+ublas::vector<double> Intersection::getPoint() {
 	return point;
 }
 
-ublas::vector<float> Intersection::getSurfaceNormal() {
+ublas::vector<double> Intersection::getSurfaceNormal() {
 	return normal;
 }
 
