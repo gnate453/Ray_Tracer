@@ -231,7 +231,7 @@ World worldFromString(std::string d) {
 		
 			Light l(dir, c);
 
-			std::cout<<"light color: "<<c<<std::endl;						
+			//std::cout<<"light color: "<<c<<std::endl;						
 
 			newWorld.addLight(l);
 		}
@@ -413,8 +413,8 @@ Intersection intersectRayWithSpheres(Ray ray, std::list<Sphere> spheres, Camera 
 
 
 Intersection intersectRayWithPolygons(Ray ray, std::list<Polygon> polygons, Camera c) {
-	ublas::matrix<float> M (VECTOR_3D, VECTOR_3D);
-	ublas::matrix<float> Mi (VECTOR_3D, VECTOR_3D);
+	//ublas::matrix<float> M (VECTOR_3D, VECTOR_3D);
+	//ublas::matrix<float> Mi (VECTOR_3D, VECTOR_3D);
 	//ublas::matrix<float> Mb (VECTOR_3D, VECTOR_3D);
 	//ublas::matrix<float> Mg (VECTOR_3D, VECTOR_3D);
 	//ublas::matrix<float> Mt (VECTOR_3D, VECTOR_3D);
@@ -434,51 +434,83 @@ Intersection intersectRayWithPolygons(Ray ray, std::list<Polygon> polygons, Came
 			e2 = f->getVertex(P_THREE) - f->getVertex(P_ONE);
 			A = ray.getPRP() - f->getVertex(P_ONE);
 			
-			M (X, X) = e1 (X);
-			M (Y, X) = e1 (Y);
-			M (Z, X) = e1 (Z);
-			M (X, Y) = e2 (X);
-			M (Y, Y) = e2 (Y);
-			M (Z, Y) = e2 (Z);
-			M (X, Z) = rW (X);
-			M (Y, Z) = rW (Y);
-			M (Z, Z) = rW (Z);
+			//M (X, X) = e1 (X);
+			//M (Y, X) = e1 (Y);
+			//M (Z, X) = e1 (Z);
+			//M (X, Y) = e2 (X);
+			//M (Y, Y) = e2 (Y);
+			//M (Z, Y) = e2 (Z);
+			//M (X, Z) = rW (X);
+			//M (Y, Z) = rW (Y);
+			//M (Z, Z) = rW (Z);
 			
-			float det = M (X, X) * ((M(Y, Y) * M(Z, Z)) - (M (Y, Z) * M(Z, Y)))
-						- M (X, Y) * ((M(Z, Z) * M(Y, X)) - (M (Y, Z) * M(Z, X)))
-						+ M (X, Z) * ((M(Y, X) * M(Z, Y)) - (M (Y, Y) * M(Z, X)));
-			
-			//Cramer's Rule
+			//float det = M (X, X) * ((M(Y, Y) * M(Z, Z)) - (M (Y, Z) * M(Z, Y)))
+			//			- M (X, Y) * ((M(Z, Z) * M(Y, X)) - (M (Y, Z) * M(Z, X)))
+			//			+ M (X, Z) * ((M(Y, X) * M(Z, Y)) - (M (Y, Y) * M(Z, X)));
+
+//			Mi (X, X) = ((M (Y, Y) * M (Z, Z)) - (M (Y, Z) * M (Z, Y)));
+//			Mi (X, Y) = -((M (Y, X) * M (Z, Z)) - (M (Y, Z) * M (Z, X)));
+//			Mi (X, Z) = ((M (Y, X) * M (Z, Y)) - (M (Y, Y) * M (Z, X)));
+//			Mi (Y, X) = -((M (X, Y) * M (Z, Z)) - (M (X, Z) * M (Z, Y)));
+//			Mi (Y, Y) = ((M (X, X) * M (Z, Z)) - (M (X, Z) * M (Z, X)));
+//			Mi (Y, Z) = -((M (X, X) * M (Z, Y)) - (M (X, Y) * M (Z, X)));
+//			Mi (Z, X) = ((M (X, Y) * M (Y, Z)) - (M (X, Z) * M (Y, Y)));
+//			Mi (Z, Y) = -((M (X, X) * M(Y, Z)) - (M (X, Y) * M (Y, X)));
+//			Mi (Z, Z) = ((M (X, X) * M (Y, Y)) - (M (X, Y) *M (Y, X)));
+
+//			Mi = inv_det * Mi;
+
+		
+
 			//compute the det of [(p2-p1), (p3-p1), A] matrix
-			//float det = (e1(X) * ( (e2(Y)*rW(Z)) - (rW(Y)*e2(Z)) ))
-			//	- (e2(X) * ( (rW(Z)*e1(Y)) - (rW(Y)*e1(Z)) ))
-			//	- (rW(X) * ( (e1(Y)*e2(Z)) - (e2(Y)*e1(Z)) ));  	
+			float det = (e1(X) * ( (e2(Y)*rW(Z)) - (rW(Y)*e2(Z)) ))
+				- (e2(X) * ( (rW(Z)*e1(Y)) - (rW(Y)*e1(Z)) ))
+				- (rW(X) * ( (e1(Y)*e2(Z)) - (e2(Y)*e1(Z)) ));  	
 			
 			float inv_det = 1.0 / det;			
 
-			Mi (X, X) = inv_det * ((e2(Y)*rW(Z)) - (rW(Y)*e2(Z)));
-			Mi (X, Y) = inv_det * -((e1(Y)*rW(Z)) - (rW(Y)*e1(Z)));
-			Mi (X, Z) = inv_det * ((e1(Y)*e2(Z)) - (e2(Y)*e1(Z)));
-			Mi (Y, X) = inv_det * -((e1(X)*rW(Z)) - (rW(X)*e2(Z)));
-			Mi (Y, Y) = inv_det * ((e1(X)*rW(Z)) - (rW(X)*e1(Z)));
-			Mi (Y, Z) = inv_det * -((e1(X)*e2(Z)) - (e2(X)*e1(Z)));
-			Mi (Z, X) = inv_det * ((e2(X)*rW(Y)) - (rW(X)*e2(Y)));
-			Mi (Z, Y) = inv_det * -((e1(X)*rW(Y)) - (rW(Z)*e1(Y)));
-			Mi (Z, Z) = inv_det * ((e1(X)*e2(Y)) - (e2(X)*e1(Y)));
 
-			M = prod(Mi, M);
-			ublas::vector<float> tmp (VECTOR_3D);
-			ublas::vector<float> ans (VECTOR_3D);
-			tmp (X) = 1;
-			tmp (Y) = 1;
-			tmp (Z) = 1;
-			ans = prod(M, tmp);			
-			tmp = prod(Mi, A);
+			float Ai = inv_det * ((e2(Y)*rW(Z)) - (rW(Y)*e2(Z)));
+			float Bi = inv_det * -((e1(Y)*rW(Z)) - (rW(Y)*e1(Z)));
+			float Ci = inv_det * ((e1(Y)*e2(Z)) - (e2(Y)*e1(Z)));
+			float Di = inv_det * -((e1(X)*rW(Z)) - (rW(X)*e2(Z)));
+			float Ei = inv_det * ((e1(X)*rW(Z)) - (rW(X)*e1(Z)));
+			float Fi = inv_det * -((e1(X)*rW(Z)) - (rW(X)*e1(Z)));
+			float Gi = inv_det * ((e2(X)*rW(Y)) - (rW(X)*e2(Y)));
+			float Hi = inv_det * -((e1(X)*rW(Y)) - (rW(Z)*e1(Y)));
+			float Ii = inv_det * ((e1(X)*e2(Y)) - (e2(X)*e1(Y)));
+
+			//M time M inverse store in M
+			float Pa = (Ai * e1(X)) + (Di * e1(Y)) + (Gi * e1(Z));
+			float Pb = (Bi * e1(X)) + (Ei * e1(Y)) + (Hi * e1(Z));
+			float Pc = (Ci * e1(X)) + (Fi * e1(Y)) + (Ii * e1(Z));
+			float Pd = (Ai * e2(X)) + (Di * e2(Y)) + (Gi * e2(Z));
+			float Pe = (Bi * e2(X)) + (Ei * e2(Y)) + (Hi * e2(Z));
+			float Pf = (Ci * e2(X)) + (Fi * e2(Y)) + (Ii * e2(Z));
+			float Pg = (Ai * rW(X)) + (Di * rW(Y)) + (Gi * rW(Z));
+			float Ph = (Bi * rW(X)) + (Ei * rW(Y)) + (Hi * rW(Z));
+			float Pi = (Ci * rW(X)) + (Fi * rW(Y)) + (Ii * rW(Z));
+		
+
+			//result is the beta gamma tstar vector
+			ublas::vector<float> result (VECTOR_3D);
+			ublas::vector<float> answer (VECTOR_3D);
 			
+			result (X) = Pa + Pd + Pg;
+			result (Y) = Pb + Pe + Ph;
+			result (Z) = Pc + Pf + Pi;
 
-			if ( norm_2(tmp - ans) == 0) { 
+			answer (X) = (Ai * A(X)) + (Di * A(Y)) + (Gi * A(Z));
+			answer (Y) = (Bi * A(X)) + (Ei * A(Y)) + (Hi * A(Z));				
+			answer (Y) = (Ci * A(X)) + (Fi * A(Y)) + (Ii * A(Z));
+
+			std::cout<<"result: "<<result<<"answer: "<<answer<<std::endl;
+
+			if ( result(X) == answer(X) 
+				&& result(Y) == answer(Y)
+				&& result(Z) == answer(Z) ) { 
 				
-				float tstar = ans (Z);
+				float tstar = result(Z);
 				
 				if (tstar < closest){
 					closest = tstar;

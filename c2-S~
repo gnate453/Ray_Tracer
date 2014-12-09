@@ -5,4 +5,4 @@ l 10 10 20 1 0 150 0
 l -7 7 20 1 0 0 150
 #l 4 4 20 1 255 0 0
 #ray cast command
-r spheres_01 512 512 1
+r spheres_01 1600 900 1
