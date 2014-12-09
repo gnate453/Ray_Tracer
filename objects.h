@@ -2,6 +2,7 @@
 #define OBJS_H 1
 
 #include <boost/numeric/ublas/vector.hpp>
+#include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/io.hpp>
 #include <cmath>
 #include <list>
@@ -39,7 +40,7 @@ namespace ublas = boost::numeric::ublas;
 #define SPHERE true
 #define POLYGON false
 #define AMB_LIGHT 20.0
-#define LIGHT_FACT 20
+#define LIGHT_FACT 80
 #define EPSILON 0.000001
 #define ZERO 0
 #define ZERO_F 0.0
@@ -50,47 +51,47 @@ namespace ublas = boost::numeric::ublas;
 #define LENGTH_7 7
 
 
-ublas::vector<double> crossProductVectors(ublas::vector<double> v1, ublas::vector<double> v2);
+ublas::vector<float> crossProductVectors(ublas::vector<float> v1, ublas::vector<float> v2);
 
 
 class Material {
 	private:
 	std::string name;
-	ublas::vector<double> ka;
-	ublas::vector<double> kd;
-	ublas::vector<double> ks;
+	ublas::vector<float> ka;
+	ublas::vector<float> kd;
+	ublas::vector<float> ks;
 
 	public:
 	Material();
-	Material(const std::string&, const ublas::vector<double>&);
-	Material(const std::string&, const ublas::vector<double>&, const ublas::vector<double>&, const ublas::vector<double>&);
+	Material(const std::string&, const ublas::vector<float>&);
+	Material(const std::string&, const ublas::vector<float>&, const ublas::vector<float>&, const ublas::vector<float>&);
 	std::string getName();
-	ublas::vector<double> getAmbientProperties();
-	double getAmbientRed();
-	double getAmbientGreen();
-	double getAmbientBlue();
-	ublas::vector<double> getDiffuseProperties();
-	double getDiffuseRed();
-	double getDiffuseGreen();
-	double getDiffuseBlue();
-	ublas::vector<double> getSpecularProperties();
-	double getSpecularRed();
-	double getSpecularGreen();
-	double getSpecularBlue();
-	double getSpecularAlpha();
+	ublas::vector<float> getAmbientProperties();
+	float getAmbientRed();
+	float getAmbientGreen();
+	float getAmbientBlue();
+	ublas::vector<float> getDiffuseProperties();
+	float getDiffuseRed();
+	float getDiffuseGreen();
+	float getDiffuseBlue();
+	ublas::vector<float> getSpecularProperties();
+	float getSpecularRed();
+	float getSpecularGreen();
+	float getSpecularBlue();
+	float getSpecularAlpha();
 };
 
 class Face {
 	private:
-	ublas::vector<double> p1;
-	ublas::vector<double> p2;
-	ublas::vector<double> p3;
+	ublas::vector<float> p1;
+	ublas::vector<float> p2;
+	ublas::vector<float> p3;
 
 	public:
-	Face(const ublas::vector<double>&, const ublas::vector<double>&, const ublas::vector<double>& );
-	ublas::vector<double> getVertex(int);
-	ublas::vector<double> getNormal();
-	bool isOnFace(ublas::vector<double>);
+	Face(const ublas::vector<float>&, const ublas::vector<float>&, const ublas::vector<float>& );
+	ublas::vector<float> getVertex(int);
+	ublas::vector<float> getNormal();
+	bool isOnFace(ublas::vector<float>);
 	
 };
 
@@ -98,17 +99,17 @@ class Sphere {
 	private:
 	std::string name;
 	Material color;	
-	double radius;
-	ublas::vector<double> originWorldCoord;
+	float radius;
+	ublas::vector<float> originWorldCoord;
 
 	public:
-	Sphere(const std::string&, const Material&, const ublas::vector<double>&, const double&); 
+	Sphere(const std::string&, const Material&, const ublas::vector<float>&, const float&); 
 	std::string getName();
 	Material getColor(); 
-	ublas::vector<double> getOrigin();
-	double getRadius();
-	double getRadiusSquared();
-	double getDistanceToPixel(ublas::vector<double>);
+	ublas::vector<float> getOrigin();
+	float getRadius();
+	float getRadiusSquared();
+	float getDistanceToPixel(ublas::vector<float>);
 
 };
 
@@ -131,14 +132,14 @@ class Polygon {
 
 class Light {
 	private:
-	ublas::vector<double> directionVector;
+	ublas::vector<float> directionVector;
 	ublas::vector<int> color;
 
 	public:
-	Light(ublas::vector<double>, ublas::vector<double>);
-	ublas::vector<double> getDirectionVector(ublas::vector<double>); // v
-	ublas::vector<double> getUnitVector(ublas::vector<double>);  // U = (v/||v||)
-	double norm(ublas::vector<double>);	//||v|| = sqrt( (v1)^2 + (v2)^2 +...+(vn)^2 );
+	Light(ublas::vector<float>, ublas::vector<float>);
+	ublas::vector<float> getDirectionVector(ublas::vector<float>); // v
+	ublas::vector<float> getUnitVector(ublas::vector<float>);  // U = (v/||v||)
+	float norm(ublas::vector<float>);	//||v|| = sqrt( (v1)^2 + (v2)^2 +...+(vn)^2 );
 	ublas::vector<int> getColor();
 	int getRed();
 	int getGreen();
@@ -148,30 +149,30 @@ class Light {
 class Ray {
 	private:
 	//world Coordinate of the Pixel this ray colors. (L)
-	ublas::vector<double> pixelWorldCoord;
+	ublas::vector<float> pixelWorldCoord;
 	//direction vector of the ray;
-	ublas::vector<double> r;
+	ublas::vector<float> r;
 	//world Coordinate of the PRP or foucas point. (E)	
-	ublas::vector<double> focusWorldCoord;
+	ublas::vector<float> focusWorldCoord;
 	int screenX;
 	int screenY;
-	double alpha;
-	double beta;
+	float alpha;
+	float beta;
 
 	public:
-	Ray(ublas::vector<double>, ublas::vector<double>, ublas::vector<double>, int, int, double, double);
+	Ray(ublas::vector<float>, ublas::vector<float>, ublas::vector<float>, int, int, float, float);
 	int getScreenX();
 	int getScreenY();
-	double getAlpha();
-	double getBeta();
+	float getAlpha();
+	float getBeta();
 	//TODO: set world coord should take the vup, and use d, ax, by to calculte world coordinate.
-	ublas::vector<double> getPixelWorldCoord();
-	ublas::vector<double> getPRP();
-	ublas::vector<double> rayVector(); //v = L - E, L is pixel of view plane, E is PRP
-	double norm();// ||v|| = sqrt( (v1)^2 + (v2)^2 +...+(vn)^2 )
-	ublas::vector<double> unitVector();		// U = (v/||v||)
-	ublas::vector<double> unitVectorScaled(double);		// sU	
-	ublas::vector<double> paraPos(double);// R(s) = L + sU,  L is pixel of view plane.
+	ublas::vector<float> getPixelWorldCoord();
+	ublas::vector<float> getPRP();
+	ublas::vector<float> rayVector(); //v = L - E, L is pixel of view plane, E is PRP
+	float norm();// ||v|| = sqrt( (v1)^2 + (v2)^2 +...+(vn)^2 )
+	ublas::vector<float> unitVector();		// U = (v/||v||)
+	ublas::vector<float> unitVectorScaled(float);		// sU	
+	ublas::vector<float> paraPos(float);// R(s) = L + sU,  L is pixel of view plane.
 
 };
 
@@ -179,26 +180,26 @@ class Ray {
 class Camera {
 	private:
 	std::string name;
-	ublas::vector<double> focusWorldCoord;
-	ublas::vector<double> viewPlaneWorldCoord;
-	ublas::vector<double> vectorUp;
-	ublas::vector<double> viewPlaneNormal;
-	ublas::vector<double> horizontalAxis;
-	ublas::vector<double> verticalAxis;
-	double nearClip;
-	double farClip;
+	ublas::vector<float> focusWorldCoord;
+	ublas::vector<float> viewPlaneWorldCoord;
+	ublas::vector<float> vectorUp;
+	ublas::vector<float> viewPlaneNormal;
+	ublas::vector<float> horizontalAxis;
+	ublas::vector<float> verticalAxis;
+	float nearClip;
+	float farClip;
 	
 	public:
-	Camera(std::string, ublas::vector<double>, ublas::vector<double>, ublas::vector<double>, double, double);
+	Camera(std::string, ublas::vector<float>, ublas::vector<float>, ublas::vector<float>, float, float);
 	std::string getName();
-	ublas::vector<double> getPRP();
-	ublas::vector<double> getVRP();
-	ublas::vector<double> getVPN();
-	ublas::vector<double> getVUP();
-	ublas::vector<double> getHorizontalVector();
-	ublas::vector<double> getVerticalVector();
-	double getNearClip();
-	double getFarClip();
+	ublas::vector<float> getPRP();
+	ublas::vector<float> getVRP();
+	ublas::vector<float> getVPN();
+	ublas::vector<float> getVUP();
+	ublas::vector<float> getHorizontalVector();
+	ublas::vector<float> getVerticalVector();
+	float getNearClip();
+	float getFarClip();
 
 };
 
@@ -262,7 +263,7 @@ class World {
 	std::list<Sphere> spheres;
 	std::list<Polygon> polygons;
 	std::list<Light> lights;
-	std::map<std::size_t, ublas::vector<double> > vertices;
+	std::map<std::size_t, ublas::vector<float> > vertices;
 	std::map<std::string, Material> materials;
 
 	public:
@@ -276,24 +277,24 @@ class World {
 	void addPolygon(Polygon);
 	std::list<Light> getLights();
 	void addLight(Light);
-	std::map<size_t, ublas::vector<double> > getVertices();
-	void addVertex(ublas::vector<double>);
+	std::map<size_t, ublas::vector<float> > getVertices();
+	void addVertex(ublas::vector<float>);
 	std::map<std::string, Material> getMaterials();
 	void addMaterial(std::string, Material);
 };
 
 class Intersection {
 	private:
-	double depth;
+	float depth;
 	Material surfaceMaterial;
-	ublas::vector<double> point;
-	ublas::vector<double> normal;
+	ublas::vector<float> point;
+	ublas::vector<float> normal;
 
 	public:
-	Intersection(double, ublas::vector<double>, ublas::vector<double>, Material);
-	double getDepth();
-	ublas::vector<double> getPoint();
-	ublas::vector<double> getSurfaceNormal();
+	Intersection(float, ublas::vector<float>, ublas::vector<float>, Material);
+	float getDepth();
+	ublas::vector<float> getPoint();
+	ublas::vector<float> getSurfaceNormal();
 	Material getSurfaceMaterial();
 };
 

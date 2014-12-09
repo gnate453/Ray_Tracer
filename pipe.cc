@@ -16,12 +16,12 @@ World worldFromString(std::string d) {
 		//vertex
 		if (*(tmp.begin()) == 'v') {
 			std::stringstream parse(tmp.substr(LENGTH_1, tmp.length()));
-			ublas::vector<double> v (VECTOR_3D);
+			ublas::vector<float> v (VECTOR_3D);
 			parse>>v(X);
 			parse>>v(Y);
 			parse>>v(Z);
 
-			double n;
+			float n;
 			if (parse>>n) {
 				v(X) = v(X)/n;
 				v(Y) = v(Y)/n;
@@ -102,13 +102,13 @@ World worldFromString(std::string d) {
 			std::stringstream parse(tmp.substr(LENGTH_1, tmp.length()));
 			
 			std::string name;
-			ublas::vector<double> w (VECTOR_3D);
+			ublas::vector<float> w (VECTOR_3D);
 			
 			parse>>name;
 			parse>>w (X);
 			parse>>w (Y);
 			parse>>w (Z);
-			double r;
+			float r;
 			parse>>r;
 			//std::cout<<name<<" "<<w<<" "<<r<<std::endl;
 			Sphere sphere(name, newWorld.getMaterials()[curMaterial], w, r);
@@ -120,9 +120,9 @@ World worldFromString(std::string d) {
 		
 			//std::cout<<parse.str()<<std::endl;	
 			std::string name, prefix;
-			ublas::vector<double> ka (VECTOR_C);
-			ublas::vector<double> kd (VECTOR_C);
-			ublas::vector<double> ks (VECTOR_C);
+			ublas::vector<float> ka (VECTOR_C);
+			ublas::vector<float> kd (VECTOR_C);
+			ublas::vector<float> ks (VECTOR_C);
 
 			parse>>name;
 
@@ -147,7 +147,7 @@ World worldFromString(std::string d) {
 			std::stringstream ph(tmp.substr(LENGTH_2, tmp.length()));
 			ph>>ks(ALPHA);
 			
-			std::cout<<name<<" "<<ka<<" "<<kd<<" "<<ks<<std::endl; 			
+			//std::cout<<name<<" "<<ka<<" "<<kd<<" "<<ks<<std::endl; 			
 
 			Material mtl(name, ka, kd, ks);
 			newWorld.addMaterial(name, mtl);
@@ -155,9 +155,9 @@ World worldFromString(std::string d) {
 		//use material
 		else if (*(tmp.begin()) == 'u') {	
 			std::stringstream parse(tmp.substr(LENGTH_6, tmp.length()));
-			//std::cout<<"Before use: "<<curMaterial<<std::endl;	
+			std::cout<<"Before use: "<<curMaterial<<std::endl;	
 			parse>>curMaterial;
-			//std::cout<<"After use: "<<curMaterial<<std::endl;	
+			std::cout<<"After use: "<<curMaterial<<std::endl;	
 		}
 		//camera
 		else if (*(tmp.begin()) == 'c')
@@ -165,9 +165,9 @@ World worldFromString(std::string d) {
 			std::stringstream parse(tmp.substr(LENGTH_1, tmp.length()));
 			
 			std::string name;
-			ublas::vector<double> prp (VECTOR_3D);
-			ublas::vector<double> vpn (VECTOR_3D);
-			ublas::vector<double> vup (VECTOR_3D);
+			ublas::vector<float> prp (VECTOR_3D);
+			ublas::vector<float> vpn (VECTOR_3D);
+			ublas::vector<float> vup (VECTOR_3D);
 
 			parse>>name;
 			parse>>prp (X);
@@ -183,7 +183,7 @@ World worldFromString(std::string d) {
 			parse>>vup (Z);
 
 		
-			double near, far;
+			float near, far;
 			parse>>near;
 			parse>>far;
 			//TODO: parse new camera information.  Construct camera object appropriately.
@@ -193,7 +193,7 @@ World worldFromString(std::string d) {
 		//scene
 		else if (*(tmp.begin()) == 'r')
 		{	
-			//TODO: DOUBLE CHECK this is still all that is needed for a scene.
+			//TODO: float CHECK this is still all that is needed for a scene.
 			std::stringstream parse(tmp.substr(LENGTH_1, tmp.length()));
 
 			std::string name;
@@ -211,9 +211,9 @@ World worldFromString(std::string d) {
 		{	
 			std::stringstream parse(tmp.substr(LENGTH_1, tmp.length()));
 
-			ublas::vector<double> dir (VECTOR_3D);
+			ublas::vector<float> dir (VECTOR_3D);
 			ublas::vector<int> c (VECTOR_C);
-			double w;
+			float w;
 
 			parse>>dir(X);
 			parse>>dir(Y);
@@ -230,7 +230,9 @@ World worldFromString(std::string d) {
 			c(ALPHA) = 1;		
 		
 			Light l(dir, c);
-			
+
+			std::cout<<"light color: "<<c<<std::endl;						
+
 			newWorld.addLight(l);
 		}
 	}
@@ -254,7 +256,7 @@ void castRays(World w) {
 	std::list<Camera> cameras = w.getCameras();
 	std::list<Scene> scenes = w.getScenes();
 	std::list<Image> imgs;
-	//double rsqd, csqd;
+	//float rsqd, csqd;
 	
 	for (std::list<Scene>::iterator sit = scenes.begin();
 			sit != scenes.end(); ++sit)
@@ -263,8 +265,8 @@ void castRays(World w) {
 		for (std::list<Camera>::iterator cit = cameras.begin();
 				cit != cameras.end(); ++cit)
 		{	
-			ublas::vector<double> camU = cit->getHorizontalVector();
-			ublas::vector<double> camV = cit->getVerticalVector();
+			ublas::vector<float> camU = cit->getHorizontalVector();
+			ublas::vector<float> camV = cit->getVerticalVector();
 
 			//std::cout<<"U: "<<camU<<" V: "<<camV<<" PRP: "<<cit->getPRP()<<std::endl;
 
@@ -276,11 +278,11 @@ void castRays(World w) {
 				
 				for (int j = 0; j < sit->getWidth(); ++j)
 				{
-					double x = (2.0/(sit->getWidth()-1))*j - 1;
-					double y = (2.0/(sit->getHeight()-1))*i - 1;
+					float x = (2.0/(sit->getWidth()-1))*j - 1;
+					float y = (2.0/(sit->getHeight()-1))*i - 1;
 					
-					ublas::vector<double> r(VECTOR_3D);
-					ublas::vector<double> pixelWorldCoord (VECTOR_3D);
+					ublas::vector<float> r(VECTOR_3D);
+					ublas::vector<float> pixelWorldCoord (VECTOR_3D);
 
 					r (X) = (-cit->getNearClip() * cit->getVPN()(X)) + (x * camU(X)) + (y * camV(X));
 					r (Y) = (-cit->getNearClip() * cit->getVPN()(Y)) + (x * camU(Y)) + (y * camV(Y));
@@ -363,13 +365,13 @@ void castRays(World w) {
 
 Intersection intersectRayWithSpheres(Ray ray, std::list<Sphere> spheres, Camera c) {
 
-	ublas::vector<double> U = ray.unitVector();
-	double closest = c.getFarClip();
+	ublas::vector<float> U = ray.unitVector();
+	float closest = c.getFarClip();
 	Intersection closestIntersection = Intersection(closest, ray.paraPos(closest), U, spheres.front().getColor());
 	//std::cout<<ray.getX()<<","<<ray.getY()<<" U: "<<U<<std::endl;
 	for (std::list<Sphere>::iterator s = spheres.begin(); s != spheres.end(); ++s)
 	{
-		double v, csqd, dsqd;
+		float v, csqd, dsqd;
 		//std::cout<<"Object: "<<s->getName()<<" "<<ray.getScreenX()<<" "<<ray.getScreenY()<<std::endl;
 		//std::cout<<"PRP: "<<ray.getPRP()<<std::endl;
 		//std::cout<<"VPN: "<<c.getVPN()<<std::endl;
@@ -384,16 +386,16 @@ Intersection intersectRayWithSpheres(Ray ray, std::list<Sphere> spheres, Camera 
 
 		//std::cout<<" r^2: "<<s->getRadiusSquared()<<" c^2: "<<csqd<<" v^2: "<<v*v<<std::endl;
 		if (dsqd > 0) {
-			double d = std::sqrt(dsqd);
+			float d = std::sqrt(dsqd);
 			//std::cout<<"  d^2: "<<dsqd<<" d: "<<d<<"\n"<<std::endl;
 			//normal to sphere
-			ublas::vector<double> S = ray.paraPos(v-d);
-			ublas::vector<double> toNear = S - ray.paraPos(c.getNearClip());			
-			ublas::vector<double> toFar = ray.paraPos(c.getFarClip()) - S;
+			ublas::vector<float> S = ray.paraPos(v-d);
+			ublas::vector<float> toNear = S - ray.paraPos(c.getNearClip());			
+			ublas::vector<float> toFar = ray.paraPos(c.getFarClip()) - S;
 
 			if ( c.getNearClip() < std::abs(v-d) && std::abs(v-d) < c.getFarClip() ) { 
 				
-				ublas::vector<double> N = S - s->getOrigin();
+				ublas::vector<float> N = S - s->getOrigin();
 				N = (1/norm_2(N)) * N; 
 				
 				//record closest distance interestion with infromation to color pixel.
@@ -411,56 +413,90 @@ Intersection intersectRayWithSpheres(Ray ray, std::list<Sphere> spheres, Camera 
 
 
 Intersection intersectRayWithPolygons(Ray ray, std::list<Polygon> polygons, Camera c) {
-	ublas::vector<double> U = ray.unitVector();
-	
-	double closest = c.getFarClip();
-	Intersection closestIntersection = Intersection(closest, ray.paraPos(closest), U, polygons.front().getColor());
+	ublas::matrix<float> M (VECTOR_3D, VECTOR_3D);
+	ublas::matrix<float> Mi (VECTOR_3D, VECTOR_3D);
+	//ublas::matrix<float> Mb (VECTOR_3D, VECTOR_3D);
+	//ublas::matrix<float> Mg (VECTOR_3D, VECTOR_3D);
+	//ublas::matrix<float> Mt (VECTOR_3D, VECTOR_3D);
+	ublas::vector<float> rW = -ray.unitVector();
+	ublas::vector<float> e1;
+	ublas::vector<float> e2;
+	ublas::vector<float> A;
+
+	float closest = c.getFarClip();
+	Intersection closestIntersection = Intersection(closest, ray.paraPos(closest), rW, polygons.front().getColor());
 
 	for	(std::list<Polygon>::iterator p = polygons.begin(); p != polygons.end(); ++p) {
-		double disToClosestFace = c.getFarClip();
+		float disToClosestFace = c.getFarClip();
 		std::list<Face> facesInP = p->getFaces();
 		for (std::list<Face>::iterator f = facesInP.begin(); f != facesInP.end(); ++f) {
-			ublas::vector<double> x0 = f->getVertex(P_TWO) - f->getVertex(P_ONE);
-			ublas::vector<double> x1 = f->getVertex(P_THREE) - f->getVertex(P_ONE);
+			e1  = f->getVertex(P_TWO) - f->getVertex(P_ONE);
+			e2 = f->getVertex(P_THREE) - f->getVertex(P_ONE);
+			A = ray.getPRP() - f->getVertex(P_ONE);
 			
-			ublas::vector<double> prod = crossProductVectors(x1, -U);
+			M (X, X) = e1 (X);
+			M (Y, X) = e1 (Y);
+			M (Z, X) = e1 (Z);
+			M (X, Y) = e2 (X);
+			M (Y, Y) = e2 (Y);
+			M (Z, Y) = e2 (Z);
+			M (X, Z) = rW (X);
+			M (Y, Z) = rW (Y);
+			M (Z, Z) = rW (Z);
+			
+			float det = M (X, X) * ((M(Y, Y) * M(Z, Z)) - (M (Y, Z) * M(Z, Y)))
+						- M (X, Y) * ((M(Z, Z) * M(Y, X)) - (M (Y, Z) * M(Z, X)))
+						+ M (X, Z) * ((M(Y, X) * M(Z, Y)) - (M (Y, Y) * M(Z, X)));
+			
+			//Cramer's Rule
+			//compute the det of [(p2-p1), (p3-p1), A] matrix
+			//float det = (e1(X) * ( (e2(Y)*rW(Z)) - (rW(Y)*e2(Z)) ))
+			//	- (e2(X) * ( (rW(Z)*e1(Y)) - (rW(Y)*e1(Z)) ))
+			//	- (rW(X) * ( (e1(Y)*e2(Z)) - (e2(Y)*e1(Z)) ));  	
+			
+			float inv_det = 1.0 / det;			
 
-			double det = inner_prod(x0, prod);
+			Mi (X, X) = inv_det * ((e2(Y)*rW(Z)) - (rW(Y)*e2(Z)));
+			Mi (X, Y) = inv_det * -((e1(Y)*rW(Z)) - (rW(Y)*e1(Z)));
+			Mi (X, Z) = inv_det * ((e1(Y)*e2(Z)) - (e2(Y)*e1(Z)));
+			Mi (Y, X) = inv_det * -((e1(X)*rW(Z)) - (rW(X)*e2(Z)));
+			Mi (Y, Y) = inv_det * ((e1(X)*rW(Z)) - (rW(X)*e1(Z)));
+			Mi (Y, Z) = inv_det * -((e1(X)*e2(Z)) - (e2(X)*e1(Z)));
+			Mi (Z, X) = inv_det * ((e2(X)*rW(Y)) - (rW(X)*e2(Y)));
+			Mi (Z, Y) = inv_det * -((e1(X)*rW(Y)) - (rW(Z)*e1(Y)));
+			Mi (Z, Z) = inv_det * ((e1(X)*e2(Y)) - (e2(X)*e1(Y)));
+
+			M = prod(Mi, M);
+			ublas::vector<float> tmp (VECTOR_3D);
+			ublas::vector<float> ans (VECTOR_3D);
+			tmp (X) = 1;
+			tmp (Y) = 1;
+			tmp (Z) = 1;
+			ans = prod(M, tmp);			
+			tmp = prod(Mi, A);
 			
-			if ( det > -EPSILON && det < EPSILON) 
-				break;
-			det = 1.0/det;
+
+			if ( norm_2(tmp - ans) == 0) { 
 				
-			ublas::vector<double> A = ray.getPRP() -  f->getVertex(P_ONE);
-			double beta = inner_prod(A, prod) * det;
-
-			if ( beta < 0.0 || beta > 1.0 )
-				break;
-			ublas::vector<double> Q = crossProductVectors(x0, -A);
-
-			double gamma = inner_prod(U, Q) * det;
-			if ( gamma < 0.0 || beta+gamma > 1.0)
-				break;
-							
-			double tstar = inner_prod(x1, Q) * det;
-			if (tstar > EPSILON) {
+				float tstar = ans (Z);
+				
 				if (tstar < closest){
 					closest = tstar;
 					closestIntersection = Intersection(closest, ray.paraPos(tstar), f->getNormal(), p->getColor());
 				}
-			} //end if intersection 					
+			} //end if intersection
 		} //end for each face
 	} //end for each polygon
 
 	return closestIntersection;
 }
 
-ublas::vector<double> calcPixelColor(Ray ray, ublas::vector<double> point, ublas::vector<double> surfaceNormal, Material surfaceMaterial, std::list<Light> lights, double near, double far) {
+ublas::vector<float> calcPixelColor(Ray ray, ublas::vector<float> point, ublas::vector<float> surfaceNormal, Material surfaceMaterial, std::list<Light> lights, float near, float far) {
 
-	double fr = 0;
-	double fg = 0;
-	double fb = 0;
-	double intensity;
+	float fr = 0;
+	float fg = 0;
+	float fb = 0;
+	float intensity;
 	int sr = 0;
 	int sg = 0;
 	int sb = 0;
@@ -477,9 +513,9 @@ ublas::vector<double> calcPixelColor(Ray ray, ublas::vector<double> point, ublas
 		//std::cout<<"cos(theta): "<<dotProductVectors(N, l->getUnitVector())<<std::endl;
 
 		//Specular lighting.
-		double cosPhi = inner_prod(ray.unitVector(), ((2 * inner_prod(l->getUnitVector(point),
+		float cosPhi = inner_prod(ray.unitVector(), ((2 * inner_prod(l->getUnitVector(point),
 									 surfaceNormal) * surfaceNormal) - l->getUnitVector(point)));
-		double phong = pow(cosPhi, surfaceMaterial.getSpecularAlpha());
+		float phong = pow(cosPhi, surfaceMaterial.getSpecularAlpha());
 
 		//std::cout<<"cos(Phi): "<<cosPhi<<std::endl;
 		//std::cout<<"Phong: "<<phong<<std::endl;
@@ -505,7 +541,7 @@ ublas::vector<double> calcPixelColor(Ray ray, ublas::vector<double> point, ublas
 		fg = 0;
 		fb = 0;
 
-		double cosTheta = inner_prod(surfaceNormal, l->getUnitVector(point)); 
+		float cosTheta = inner_prod(surfaceNormal, l->getUnitVector(point)); 
 		if (cosTheta >= 0) {
 			fr = l->getRed() * surfaceMaterial.getDiffuseRed() * cosTheta;
 			fg = l->getGreen() * surfaceMaterial.getDiffuseGreen() * cosTheta;
@@ -525,17 +561,17 @@ ublas::vector<double> calcPixelColor(Ray ray, ublas::vector<double> point, ublas
 	int ab = surfaceMaterial.getAmbientBlue() * AMB_LIGHT;
 
 	//add lighting.				
-	intensity = LIGHT_FACT * (double(sr + dr + ar) / INT_MAX);
+	intensity = LIGHT_FACT * (float(sr + dr + ar) / INT_MAX);
 	pr = (int) COLOR_MAX * intensity;
 	if ( pr > COLOR_MAX)
 		pr = COLOR_MAX;
 
-	intensity = LIGHT_FACT * (double(sg + dg + ag) / INT_MAX);
+	intensity = LIGHT_FACT * (float(sg + dg + ag) / INT_MAX);
 	pg = (int) COLOR_MAX * intensity;
 	if (pg > COLOR_MAX)
 		pg = COLOR_MAX;
 
-	intensity = LIGHT_FACT * (double(sb + db + ab) / INT_MAX);
+	intensity = LIGHT_FACT * (float(sb + db + ab) / INT_MAX);
 	pb = (int) COLOR_MAX * intensity;
 	if ( pb > COLOR_MAX)
 		pb = COLOR_MAX;
@@ -545,12 +581,12 @@ ublas::vector<double> calcPixelColor(Ray ray, ublas::vector<double> point, ublas
 	//std::cout<<"blue: s:"<<sb<<" d:"<<db<<" i:"<<intensity<<std::endl;
 
 	//depth TODO: needs fix?	
-	ublas::vector<double> fc = ray.paraPos(far);	
+	ublas::vector<float> fc = ray.paraPos(far);	
 	//fc (Z) = -c.getFarClip();
-	double disN = norm_2(point - ray.getPRP());
-	double disF = norm_2(fc - point);
+	float disN = norm_2(point - ray.getPRP());
+	float disF = norm_2(fc - point);
 
-	int pdepth = (int)  COLOR_MAX - std::min( double (COLOR_MAX), (COLOR_MAX) * (disN/(far - near)));
+	int pdepth = (int)  COLOR_MAX - std::min( float (COLOR_MAX), (COLOR_MAX) * (disN/(far - near)));
 
 	ublas::vector<int> returnVal(VECTOR_C);
 	returnVal(RED) = pr;
