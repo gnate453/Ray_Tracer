@@ -466,7 +466,7 @@ Intersection intersectRayWithPolygons(Ray ray, std::list<Polygon> polygons, Came
 				- (rW(X) * ( (e1(Y)*e2(Z)) - (e2(Y)*e1(Z)) ));  	
 			
 			//if det is close to zero stop
-			if (det > -EPSILON && det < EPSILON)
+			if (det == 0.0)
 				break;
 			
 			float inv_det = 1.0 / det;					
@@ -482,42 +482,44 @@ Intersection intersectRayWithPolygons(Ray ray, std::list<Polygon> polygons, Came
 			float Ii = inv_det * ((e1(X)*e2(Y)) - (e2(X)*e1(Y)));
 
 			//M times M inverse store in M
-			float Pa = (Ai * e1(X)) + (Di * e1(Y)) + (Gi * e1(Z));
-			float Pd = (Bi * e1(X)) + (Ei * e1(Y)) + (Hi * e1(Z));
-			float Pg = (Ci * e1(X)) + (Fi * e1(Y)) + (Ii * e1(Z));
-			float Pb = (Ai * e2(X)) + (Di * e2(Y)) + (Gi * e2(Z));
-			float Pe = (Bi * e2(X)) + (Ei * e2(Y)) + (Hi * e2(Z));
-			float Ph = (Ci * e2(X)) + (Fi * e2(Y)) + (Ii * e2(Z));
-			float Pc = (Ai * rW(X)) + (Di * rW(Y)) + (Gi * rW(Z));
-			float Pf = (Bi * rW(X)) + (Ei * rW(Y)) + (Hi * rW(Z));
-			float Pi = (Ci * rW(X)) + (Fi * rW(Y)) + (Ii * rW(Z));
+			//float Pa = (Ai * e1(X)) + (Di * e1(Y)) + (Gi * e1(Z));
+			//float Pd = (Bi * e1(X)) + (Ei * e1(Y)) + (Hi * e1(Z));
+			//float Pg = (Ci * e1(X)) + (Fi * e1(Y)) + (Ii * e1(Z));
+			//float Pb = (Ai * e2(X)) + (Di * e2(Y)) + (Gi * e2(Z));
+			//float Pe = (Bi * e2(X)) + (Ei * e2(Y)) + (Hi * e2(Z));
+			//float Ph = (Ci * e2(X)) + (Fi * e2(Y)) + (Ii * e2(Z));
+			//float Pc = (Ai * rW(X)) + (Di * rW(Y)) + (Gi * rW(Z));
+			//float Pf = (Bi * rW(X)) + (Ei * rW(Y)) + (Hi * rW(Z));
+			//float Pi = (Ci * rW(X)) + (Fi * rW(Y)) + (Ii * rW(Z));
 		
 
 			//result is the beta gamma tstar vector
-			ublas::vector<float> result (VECTOR_3D);
+			//ublas::vector<float> result (VECTOR_3D);
 			ublas::vector<float> answer (VECTOR_3D);
-			
-			result (X) = Pa + Pb + Pc;
-			result (Y) = Pd + Pe + Pf;
-			result (Z) = Pg + Ph + Pi;
 
 			answer (X) = (Ai * A(X)) + (Di * A(Y)) + (Gi * A(Z));
-			answer (Y) = (Bi * A(X)) + (Ei * A(Y)) + (Hi * A(Z));				
+
+			if (answer (X) < 0.0 || answer (X) > 1.0)
+				break;
+
+			answer (Y) = (Bi * A(X)) + (Ei * A(Y)) + (Hi * A(Z));
+
+			if (answer (Y) < 0.0 || answer (X) + answer (Y) > 1.0)				
+				break;
+
 			answer (Y) = (Ci * A(X)) + (Fi * A(Y)) + (Ii * A(Z));
 
 			//std::cout<<"result: "<<result<<"answer: "<<answer<<std::endl;
 
-			if ( result(X) == answer(X) 
-				&& result(Y) == answer(Y)
-				&& result(Z) == answer(Z) ) { 
+		//	if ( answer (Z) > c.getNearClip() && answer (Z) < c.getFarClip()  ) { 
 				
-				float tstar = result(Z);
+				float tstar = answer (Z);
 				
 				if (tstar < closest){
 					closest = tstar;
 					closestIntersection = Intersection(closest, ray.paraPos(tstar), f->getNormal(), p->getColor());
 				}
-			} //end if intersection
+		//	} //end if intersection
 		} //end for each face
 	} //end for each polygon
 
@@ -594,24 +596,24 @@ ublas::vector<float> calcPixelColor(Ray ray, ublas::vector<float> point, ublas::
 	float ab = surfaceMaterial.getAmbientBlue() * AMB_LIGHT;
 
 	//add lighting.				
-	intensity = LIGHT_FACT * (float(/*sr + */ dr + ar) / INT_MAX);
+	intensity = LIGHT_FACT * (float(sr + dr + ar) / INT_MAX);
 	pr = (int) COLOR_MAX * intensity;
 	if ( pr > COLOR_MAX)
 		pr = COLOR_MAX;
 
-	intensity = LIGHT_FACT * (float(/*sg + */ dg + ag) / INT_MAX);
+	intensity = LIGHT_FACT * (float(sg + dg + ag) / INT_MAX);
 	pg = (int) COLOR_MAX * intensity;
 	if (pg > COLOR_MAX)
 		pg = COLOR_MAX;
 
-	intensity = LIGHT_FACT * (float(/*sb + */ db + ab) / INT_MAX);
+	intensity = LIGHT_FACT * (float(sb + db + ab) / INT_MAX);
 	pb = (int) COLOR_MAX * intensity;
 	if ( pb > COLOR_MAX)
 		pb = COLOR_MAX;
 
-	std::cout<<"red: s:"<<sr<<" d:"<<dr<<" i:"<<intensity<<std::endl;
-	std::cout<<"green: s:"<<sg<<" d:"<<dg<<" i:"<<intensity<<std::endl;
-	std::cout<<"blue: s:"<<sb<<" d:"<<db<<" i:"<<intensity<<std::endl;
+	//std::cout<<"red: s:"<<sr<<" d:"<<dr<<" i:"<<intensity<<std::endl;
+	//std::cout<<"green: s:"<<sg<<" d:"<<dg<<" i:"<<intensity<<std::endl;
+	//std::cout<<"blue: s:"<<sb<<" d:"<<db<<" i:"<<intensity<<std::endl;
 
 	//depth TODO: needs fix?	
 	ublas::vector<float> fc = ray.paraPos(far);	
