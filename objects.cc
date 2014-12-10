@@ -530,6 +530,9 @@ std::list<Sphere> World::getSpheres() {
 
 void World::addSphere(Sphere s) {
 	spheres.push_back(s);
+	std::cout<<"Polygon Added: "<<s.getName()<<std::endl;
+	std::cout<<"color: "<<s.getColor().getDiffuseProperties()
+						<<s.getColor().getSpecularProperties()<<std::endl;
 }
 
 std::list<Polygon> World::getPolygons() {
@@ -538,6 +541,10 @@ std::list<Polygon> World::getPolygons() {
 
 void World::addPolygon(Polygon p) {
 	polygons.push_back(p);
+	std::cout<<"Polygon Added: "<<p.getName()<<std::endl;
+	std::cout<<"color: "<<p.getColor().getDiffuseProperties()
+						<<p.getColor().getSpecularProperties()<<std::endl;
+	
 }
 
 std::list<Light> World::getLights() {
@@ -546,6 +553,13 @@ std::list<Light> World::getLights() {
 
 void World::addLight(Light l) {
 	lights.push_back(l);
+	std::cout<<"Added Light to world: "<<std::endl;
+	ublas::vector<float> o (VECTOR_3D);
+	o (X) = 0.0;
+	o (Y) = 0.0;
+	o (Z) = 0.0;
+	std::cout<<"direction: "<<l.getDirectionVector(o)<<std::endl;
+	std::cout<<"color: "<<l.getColor()<<std::endl;
 }
 
 std::map<size_t, ublas::vector<float> > World::getVertices() {

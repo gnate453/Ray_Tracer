@@ -460,35 +460,36 @@ Intersection intersectRayWithPolygons(Ray ray, std::list<Polygon> polygons, Came
 
 //			Mi = inv_det * Mi;
 
-		
-
 			//compute the det of [(p2-p1), (p3-p1), A] matrix
 			float det = (e1(X) * ( (e2(Y)*rW(Z)) - (rW(Y)*e2(Z)) ))
 				- (e2(X) * ( (rW(Z)*e1(Y)) - (rW(Y)*e1(Z)) ))
 				- (rW(X) * ( (e1(Y)*e2(Z)) - (e2(Y)*e1(Z)) ));  	
 			
-			float inv_det = 1.0 / det;			
-
+			//if det is close to zero stop
+			if (det > -EPSILON && det < EPSILON)
+				break;
+			
+			float inv_det = 1.0 / det;					
 
 			float Ai = inv_det * ((e2(Y)*rW(Z)) - (rW(Y)*e2(Z)));
 			float Bi = inv_det * -((e1(Y)*rW(Z)) - (rW(Y)*e1(Z)));
 			float Ci = inv_det * ((e1(Y)*e2(Z)) - (e2(Y)*e1(Z)));
-			float Di = inv_det * -((e1(X)*rW(Z)) - (rW(X)*e2(Z)));
+			float Di = inv_det * -((e2(X)*rW(Z)) - (rW(X)*e2(Z)));
 			float Ei = inv_det * ((e1(X)*rW(Z)) - (rW(X)*e1(Z)));
-			float Fi = inv_det * -((e1(X)*rW(Z)) - (rW(X)*e1(Z)));
+			float Fi = inv_det * -((e1(X)*e2(Z)) - (e2(X)*e1(Z)));
 			float Gi = inv_det * ((e2(X)*rW(Y)) - (rW(X)*e2(Y)));
-			float Hi = inv_det * -((e1(X)*rW(Y)) - (rW(Z)*e1(Y)));
+			float Hi = inv_det * -((e1(X)*rW(Y)) - (rW(X)*e1(Y)));
 			float Ii = inv_det * ((e1(X)*e2(Y)) - (e2(X)*e1(Y)));
 
-			//M time M inverse store in M
+			//M times M inverse store in M
 			float Pa = (Ai * e1(X)) + (Di * e1(Y)) + (Gi * e1(Z));
-			float Pb = (Bi * e1(X)) + (Ei * e1(Y)) + (Hi * e1(Z));
-			float Pc = (Ci * e1(X)) + (Fi * e1(Y)) + (Ii * e1(Z));
-			float Pd = (Ai * e2(X)) + (Di * e2(Y)) + (Gi * e2(Z));
+			float Pd = (Bi * e1(X)) + (Ei * e1(Y)) + (Hi * e1(Z));
+			float Pg = (Ci * e1(X)) + (Fi * e1(Y)) + (Ii * e1(Z));
+			float Pb = (Ai * e2(X)) + (Di * e2(Y)) + (Gi * e2(Z));
 			float Pe = (Bi * e2(X)) + (Ei * e2(Y)) + (Hi * e2(Z));
-			float Pf = (Ci * e2(X)) + (Fi * e2(Y)) + (Ii * e2(Z));
-			float Pg = (Ai * rW(X)) + (Di * rW(Y)) + (Gi * rW(Z));
-			float Ph = (Bi * rW(X)) + (Ei * rW(Y)) + (Hi * rW(Z));
+			float Ph = (Ci * e2(X)) + (Fi * e2(Y)) + (Ii * e2(Z));
+			float Pc = (Ai * rW(X)) + (Di * rW(Y)) + (Gi * rW(Z));
+			float Pf = (Bi * rW(X)) + (Ei * rW(Y)) + (Hi * rW(Z));
 			float Pi = (Ci * rW(X)) + (Fi * rW(Y)) + (Ii * rW(Z));
 		
 
@@ -496,15 +497,15 @@ Intersection intersectRayWithPolygons(Ray ray, std::list<Polygon> polygons, Came
 			ublas::vector<float> result (VECTOR_3D);
 			ublas::vector<float> answer (VECTOR_3D);
 			
-			result (X) = Pa + Pd + Pg;
-			result (Y) = Pb + Pe + Ph;
-			result (Z) = Pc + Pf + Pi;
+			result (X) = Pa + Pb + Pc;
+			result (Y) = Pd + Pe + Pf;
+			result (Z) = Pg + Ph + Pi;
 
 			answer (X) = (Ai * A(X)) + (Di * A(Y)) + (Gi * A(Z));
 			answer (Y) = (Bi * A(X)) + (Ei * A(Y)) + (Hi * A(Z));				
 			answer (Y) = (Ci * A(X)) + (Fi * A(Y)) + (Ii * A(Z));
 
-			std::cout<<"result: "<<result<<"answer: "<<answer<<std::endl;
+			//std::cout<<"result: "<<result<<"answer: "<<answer<<std::endl;
 
 			if ( result(X) == answer(X) 
 				&& result(Y) == answer(Y)
@@ -529,12 +530,12 @@ ublas::vector<float> calcPixelColor(Ray ray, ublas::vector<float> point, ublas::
 	float fg = 0;
 	float fb = 0;
 	float intensity;
-	int sr = 0;
-	int sg = 0;
-	int sb = 0;
-	int dr = 0;
-	int dg = 0;
-	int db = 0;
+	float sr = 0;
+	float sg = 0;
+	float sb = 0;
+	float dr = 0;
+	float dg = 0;
+	float db = 0;
 	int pr = 0;
 	int pg = 0;
 	int pb = 0;
@@ -561,11 +562,11 @@ ublas::vector<float> calcPixelColor(Ray ray, ublas::vector<float> point, ublas::
 			fb = l->getBlue() * surfaceMaterial.getSpecularBlue() * phong;
 
 			//if (fr > 0)	
-				sr += (int) fr;
+				sr += fr;
 			//if (fg > 0)
-				sg += (int) fg;
+				sg += fg;
 			//if (fb > 0)
-				sb += (int) fb;
+				sb += fb;
 		}
 
 		//Diffuse Lighting
@@ -574,43 +575,43 @@ ublas::vector<float> calcPixelColor(Ray ray, ublas::vector<float> point, ublas::
 		fb = 0;
 
 		float cosTheta = inner_prod(surfaceNormal, l->getUnitVector(point)); 
-		if (cosTheta >= 0) {
-			fr = l->getRed() * surfaceMaterial.getDiffuseRed() * cosTheta;
-			fg = l->getGreen() * surfaceMaterial.getDiffuseGreen() * cosTheta;
-			fb = l->getBlue() * surfaceMaterial.getDiffuseBlue() * cosTheta;
-			//if (fr > 0)	
-				dr += (int) fr;
-			//if (fg > 0)
-				dg += (int) fg;
-			//if (fb > 0)
-				db += (int) fb;
-		}
+		cosTheta = std::max(0.0, (double) cosTheta);
+
+		fr = l->getRed() * surfaceMaterial.getDiffuseRed() * cosTheta;
+		fg = l->getGreen() * surfaceMaterial.getDiffuseGreen() * cosTheta;
+		fb = l->getBlue() * surfaceMaterial.getDiffuseBlue() * cosTheta;
+		//if (fr > 0)	
+			dr += fr;
+		//if (fg > 0)
+			dg += fg;
+		//if (fb > 0)
+			db += fb;
 	}			
 
 	//Ambient Lighting.
-	int ar = surfaceMaterial.getAmbientRed() * AMB_LIGHT;
-	int ag = surfaceMaterial.getAmbientGreen() * AMB_LIGHT;
-	int ab = surfaceMaterial.getAmbientBlue() * AMB_LIGHT;
+	float ar = surfaceMaterial.getAmbientRed() * AMB_LIGHT;
+	float ag = surfaceMaterial.getAmbientGreen() * AMB_LIGHT;
+	float ab = surfaceMaterial.getAmbientBlue() * AMB_LIGHT;
 
 	//add lighting.				
-	intensity = LIGHT_FACT * (float(sr + dr + ar) / INT_MAX);
+	intensity = LIGHT_FACT * (float(/*sr + */ dr + ar) / INT_MAX);
 	pr = (int) COLOR_MAX * intensity;
 	if ( pr > COLOR_MAX)
 		pr = COLOR_MAX;
 
-	intensity = LIGHT_FACT * (float(sg + dg + ag) / INT_MAX);
+	intensity = LIGHT_FACT * (float(/*sg + */ dg + ag) / INT_MAX);
 	pg = (int) COLOR_MAX * intensity;
 	if (pg > COLOR_MAX)
 		pg = COLOR_MAX;
 
-	intensity = LIGHT_FACT * (float(sb + db + ab) / INT_MAX);
+	intensity = LIGHT_FACT * (float(/*sb + */ db + ab) / INT_MAX);
 	pb = (int) COLOR_MAX * intensity;
 	if ( pb > COLOR_MAX)
 		pb = COLOR_MAX;
 
-	//std::cout<<"red: s:"<<sr<<" d:"<<dr<<" i:"<<intensity<<std::endl;
-	//std::cout<<"green: s:"<<sg<<" d:"<<dg<<" i:"<<intensity<<std::endl;
-	//std::cout<<"blue: s:"<<sb<<" d:"<<db<<" i:"<<intensity<<std::endl;
+	std::cout<<"red: s:"<<sr<<" d:"<<dr<<" i:"<<intensity<<std::endl;
+	std::cout<<"green: s:"<<sg<<" d:"<<dg<<" i:"<<intensity<<std::endl;
+	std::cout<<"blue: s:"<<sb<<" d:"<<db<<" i:"<<intensity<<std::endl;
 
 	//depth TODO: needs fix?	
 	ublas::vector<float> fc = ray.paraPos(far);	
