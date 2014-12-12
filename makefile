@@ -1,8 +1,8 @@
 CC=g++
-CFLAGS=-w -Wall -Wextra -Wpedantic -g
+CFLAGS=-w -g
 MAIN=main.o
 INCLUDE=pipe.o io.o objects.o
-TARGET=HW4 
+TARGET=HW5 
 
 all: $(INCLUDE) $(MAIN) $(TARGET)
 
@@ -13,4 +13,4 @@ $(TARGET): $(MAIN) $(INCLUDE)
 	$(CC) -o $@ $? $(FLAGS)
 
 clean:
-	rm -v *.ppm *.o HW4
+	rm -v *.ppm *.o HW5

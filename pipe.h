@@ -7,6 +7,7 @@
 #include "objects.h"
 #include "io.h"
 
+float smoothDecimal(float, int);
 World worldFromString(std::string);
 void castRays(World w);
 Intersection intersectRayWithSpheres(Ray, std::list<Sphere>, Camera);

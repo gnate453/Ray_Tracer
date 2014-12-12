@@ -40,8 +40,10 @@ namespace ublas = boost::numeric::ublas;
 #define SPHERE true
 #define POLYGON false
 #define AMB_LIGHT 20.0
-#define LIGHT_FACT 80
+#define LIGHT_FACT .00001
 #define EPSILON 0.000001
+#define BASE_TEN 10
+#define COLOR_PERCISION 3
 #define ZERO 0
 #define ZERO_F 0.0
 #define BEGIN 0

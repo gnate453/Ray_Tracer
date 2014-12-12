@@ -1,14 +1,20 @@
 #include "pipe.h"
 
+float smoothDecimal(float d, int n) {
+	return (std::floor(d * pow(BASE_TEN, n) + 0.5) / pow(BASE_TEN, n));
+}
+
 World worldFromString(std::string d) {
 	
 	World newWorld;
 	std::list<Face> facesInGroup;
 	std::string currentGroupName = "Default";
 	std::string curMaterial;
+	std::string polyMaterial;
 	std::stringstream data(d);
 	std::string tmp;
 	bool facesAdded = false;
+	bool polygonAdded = false;
 	bool groupNamed = false;
 
 	while (std::getline(data, tmp))
@@ -82,19 +88,14 @@ World worldFromString(std::string d) {
 		else if (*(tmp.begin()) == 'g') {
 			std::stringstream parse(tmp.substr(LENGTH_1, tmp.length()));
 
-			if ((!facesAdded && groupNamed) || (!facesAdded && !groupNamed)){
-				//second group, default or no faces in last group.
-				//keep list of faces
-				//get new group name
-				parse>>currentGroupName;
-			}
-			else if ((facesAdded && !groupNamed) || (facesAdded && groupNamed)) {		
+			if (facesAdded){		
 				Polygon p(currentGroupName, (newWorld.getMaterials())[curMaterial], facesInGroup);
+				polygonAdded = true;
 				newWorld.addPolygon(p);
-				parse>>currentGroupName;
 				facesInGroup.clear();
 			}
 
+			parse>>currentGroupName;
 			groupNamed = true;			
 		}
 		//sphere
@@ -149,15 +150,27 @@ World worldFromString(std::string d) {
 			
 			//std::cout<<name<<" "<<ka<<" "<<kd<<" "<<ks<<std::endl; 			
 
+			//round diffuse and specular vales to nice decimal value!
+			kd(RED) = smoothDecimal(kd(RED), COLOR_PERCISION);
+			kd(GREEN) = smoothDecimal(kd(GREEN), COLOR_PERCISION);
+			kd(BLUE) = smoothDecimal(kd(BLUE), COLOR_PERCISION);
+			
+			ks(RED) = smoothDecimal(ks(RED), COLOR_PERCISION);
+			ks(GREEN) = smoothDecimal(ks(GREEN), COLOR_PERCISION);
+			ks(BLUE) = smoothDecimal(ks(BLUE), COLOR_PERCISION);
+			
 			Material mtl(name, ka, kd, ks);
 			newWorld.addMaterial(name, mtl);
 		}
 		//use material
 		else if (*(tmp.begin()) == 'u') {	
 			std::stringstream parse(tmp.substr(LENGTH_6, tmp.length()));
-			std::cout<<"Before use: "<<curMaterial<<std::endl;	
+			//std::cout<<"Before use: "<<curMaterial<<std::endl;
+			if (!polygonAdded)
+				polyMaterial = curMaterial;
+
 			parse>>curMaterial;
-			std::cout<<"After use: "<<curMaterial<<std::endl;	
+			//std::cout<<"After use: "<<curMaterial<<std::endl;	
 		}
 		//camera
 		else if (*(tmp.begin()) == 'c')
@@ -239,8 +252,14 @@ World worldFromString(std::string d) {
 
 	if ( (facesAdded && !groupNamed) || (facesAdded && groupNamed) ) {
 		if (!facesInGroup.empty()) {
-			Polygon p(currentGroupName, (newWorld.getMaterials())[curMaterial], facesInGroup);
-			newWorld.addPolygon(p);
+			if (polygonAdded) {
+				Polygon p(currentGroupName, (newWorld.getMaterials())[curMaterial], facesInGroup);
+				newWorld.addPolygon(p);
+			}
+			else {
+				Polygon p(currentGroupName, (newWorld.getMaterials())[polyMaterial], facesInGroup);
+				newWorld.addPolygon(p);
+			}
 		}
 	}
 		
@@ -268,7 +287,7 @@ void castRays(World w) {
 			ublas::vector<float> camU = cit->getHorizontalVector();
 			ublas::vector<float> camV = cit->getVerticalVector();
 
-			//std::cout<<"U: "<<camU<<" V: "<<camV<<" PRP: "<<cit->getPRP()<<std::endl;
+			std::cout<<"U: "<<camU<<" V: "<<camV<<" PRP: "<<cit->getPRP()<<std::endl;
 
 			int count = 0;
 			int percent = 0;
@@ -434,32 +453,6 @@ Intersection intersectRayWithPolygons(Ray ray, std::list<Polygon> polygons, Came
 			e2 = f->getVertex(P_THREE) - f->getVertex(P_ONE);
 			A = ray.getPRP() - f->getVertex(P_ONE);
 			
-			//M (X, X) = e1 (X);
-			//M (Y, X) = e1 (Y);
-			//M (Z, X) = e1 (Z);
-			//M (X, Y) = e2 (X);
-			//M (Y, Y) = e2 (Y);
-			//M (Z, Y) = e2 (Z);
-			//M (X, Z) = rW (X);
-			//M (Y, Z) = rW (Y);
-			//M (Z, Z) = rW (Z);
-			
-			//float det = M (X, X) * ((M(Y, Y) * M(Z, Z)) - (M (Y, Z) * M(Z, Y)))
-			//			- M (X, Y) * ((M(Z, Z) * M(Y, X)) - (M (Y, Z) * M(Z, X)))
-			//			+ M (X, Z) * ((M(Y, X) * M(Z, Y)) - (M (Y, Y) * M(Z, X)));
-
-//			Mi (X, X) = ((M (Y, Y) * M (Z, Z)) - (M (Y, Z) * M (Z, Y)));
-//			Mi (X, Y) = -((M (Y, X) * M (Z, Z)) - (M (Y, Z) * M (Z, X)));
-//			Mi (X, Z) = ((M (Y, X) * M (Z, Y)) - (M (Y, Y) * M (Z, X)));
-//			Mi (Y, X) = -((M (X, Y) * M (Z, Z)) - (M (X, Z) * M (Z, Y)));
-//			Mi (Y, Y) = ((M (X, X) * M (Z, Z)) - (M (X, Z) * M (Z, X)));
-//			Mi (Y, Z) = -((M (X, X) * M (Z, Y)) - (M (X, Y) * M (Z, X)));
-//			Mi (Z, X) = ((M (X, Y) * M (Y, Z)) - (M (X, Z) * M (Y, Y)));
-//			Mi (Z, Y) = -((M (X, X) * M(Y, Z)) - (M (X, Y) * M (Y, X)));
-//			Mi (Z, Z) = ((M (X, X) * M (Y, Y)) - (M (X, Y) *M (Y, X)));
-
-//			Mi = inv_det * Mi;
-
 			//compute the det of [(p2-p1), (p3-p1), A] matrix
 			float det = (e1(X) * ( (e2(Y)*rW(Z)) - (rW(Y)*e2(Z)) ))
 				- (e2(X) * ( (rW(Z)*e1(Y)) - (rW(Y)*e1(Z)) ))
@@ -467,7 +460,7 @@ Intersection intersectRayWithPolygons(Ray ray, std::list<Polygon> polygons, Came
 			
 			//if det is close to zero stop
 			if (det == 0.0)
-				break;
+				continue;
 			
 			float inv_det = 1.0 / det;					
 
@@ -481,18 +474,6 @@ Intersection intersectRayWithPolygons(Ray ray, std::list<Polygon> polygons, Came
 			float Hi = inv_det * -((e1(X)*rW(Y)) - (rW(X)*e1(Y)));
 			float Ii = inv_det * ((e1(X)*e2(Y)) - (e2(X)*e1(Y)));
 
-			//M times M inverse store in M
-			//float Pa = (Ai * e1(X)) + (Di * e1(Y)) + (Gi * e1(Z));
-			//float Pd = (Bi * e1(X)) + (Ei * e1(Y)) + (Hi * e1(Z));
-			//float Pg = (Ci * e1(X)) + (Fi * e1(Y)) + (Ii * e1(Z));
-			//float Pb = (Ai * e2(X)) + (Di * e2(Y)) + (Gi * e2(Z));
-			//float Pe = (Bi * e2(X)) + (Ei * e2(Y)) + (Hi * e2(Z));
-			//float Ph = (Ci * e2(X)) + (Fi * e2(Y)) + (Ii * e2(Z));
-			//float Pc = (Ai * rW(X)) + (Di * rW(Y)) + (Gi * rW(Z));
-			//float Pf = (Bi * rW(X)) + (Ei * rW(Y)) + (Hi * rW(Z));
-			//float Pi = (Ci * rW(X)) + (Fi * rW(Y)) + (Ii * rW(Z));
-		
-
 			//result is the beta gamma tstar vector
 			//ublas::vector<float> result (VECTOR_3D);
 			ublas::vector<float> answer (VECTOR_3D);
@@ -500,18 +481,18 @@ Intersection intersectRayWithPolygons(Ray ray, std::list<Polygon> polygons, Came
 			answer (X) = (Ai * A(X)) + (Di * A(Y)) + (Gi * A(Z));
 
 			if (answer (X) < 0.0 || answer (X) > 1.0)
-				break;
+				continue;
 
 			answer (Y) = (Bi * A(X)) + (Ei * A(Y)) + (Hi * A(Z));
 
 			if (answer (Y) < 0.0 || answer (X) + answer (Y) > 1.0)				
-				break;
+				continue;
 
-			answer (Y) = (Ci * A(X)) + (Fi * A(Y)) + (Ii * A(Z));
+			answer (Z) = (Ci * A(X)) + (Fi * A(Y)) + (Ii * A(Z));
 
 			//std::cout<<"result: "<<result<<"answer: "<<answer<<std::endl;
 
-		//	if ( answer (Z) > c.getNearClip() && answer (Z) < c.getFarClip()  ) { 
+			if ( answer (Z) > c.getNearClip() && answer (Z) < c.getFarClip()  ) { 
 				
 				float tstar = answer (Z);
 				
@@ -519,7 +500,7 @@ Intersection intersectRayWithPolygons(Ray ray, std::list<Polygon> polygons, Came
 					closest = tstar;
 					closestIntersection = Intersection(closest, ray.paraPos(tstar), f->getNormal(), p->getColor());
 				}
-		//	} //end if intersection
+			} //end if intersection
 		} //end for each face
 	} //end for each polygon
 
@@ -528,88 +509,68 @@ Intersection intersectRayWithPolygons(Ray ray, std::list<Polygon> polygons, Came
 
 ublas::vector<float> calcPixelColor(Ray ray, ublas::vector<float> point, ublas::vector<float> surfaceNormal, Material surfaceMaterial, std::list<Light> lights, float near, float far) {
 
-	float fr = 0;
-	float fg = 0;
-	float fb = 0;
 	float intensity;
-	float sr = 0;
-	float sg = 0;
-	float sb = 0;
-	float dr = 0;
-	float dg = 0;
-	float db = 0;
-	int pr = 0;
-	int pg = 0;
-	int pb = 0;
+	float sr = 0.0;
+	float sg = 0.0;
+	float sb = 0.0;
+	float dr = 0.0;
+	float dg = 0.0;
+	float db = 0.0;
+	unsigned int pr = 0;
+	unsigned int pg = 0;
+	unsigned int pb = 0;
+	int illuminationCountD = 0;
+	int illuminationCountS = 0;
 	for (std::list<Light>::iterator	l = lights.begin(); l != lights.end(); ++l) {
-
+		
 		//std::cout<<"Light: "<<l->getColor()<<std::endl;
-		//std::cout<<"Object: "<<s->getColor().getSpecularProperties()<<std::endl;
-		//std::cout<<"cos(theta): "<<dotProductVectors(N, l->getUnitVector())<<std::endl;
 
 		//Specular lighting.
 		float cosPhi = inner_prod(ray.unitVector(), ((2 * inner_prod(l->getUnitVector(point),
-									 surfaceNormal) * surfaceNormal) - l->getUnitVector(point)));
-		float phong = pow(cosPhi, surfaceMaterial.getSpecularAlpha());
+									 surfaceNormal) * surfaceNormal) - l->getUnitVector(point)));	
 
-		//std::cout<<"cos(Phi): "<<cosPhi<<std::endl;
-		//std::cout<<"Phong: "<<phong<<std::endl;
-
-		fr = 0; 
-		fg = 0;
-		fb = 0;
 		if (cosPhi <= 0) {
-			fr = l->getRed() * surfaceMaterial.getSpecularRed() * phong;
-			fg = l->getGreen() * surfaceMaterial.getSpecularGreen() * phong;
-			fb = l->getBlue() * surfaceMaterial.getSpecularBlue() * phong;
+			float phong = pow(cosPhi, surfaceMaterial.getSpecularAlpha());
+			smoothDecimal(phong, COLOR_PERCISION);
+			phong = std::abs(phong);
+			sr = sr + (l->getRed() * surfaceMaterial.getSpecularRed() * phong) / COLOR_MAX;
+			sg = sg + (l->getGreen() * surfaceMaterial.getSpecularGreen() * phong) / COLOR_MAX;
+			sb = sb + (l->getBlue() * surfaceMaterial.getSpecularBlue() * phong) / COLOR_MAX;
 
-			//if (fr > 0)	
-				sr += fr;
-			//if (fg > 0)
-				sg += fg;
-			//if (fb > 0)
-				sb += fb;
+			illuminationCountS += 1;
 		}
 
 		//Diffuse Lighting
-		fr = 0; 
-		fg = 0;
-		fb = 0;
-
 		float cosTheta = inner_prod(surfaceNormal, l->getUnitVector(point)); 
-		cosTheta = std::max(0.0, (double) cosTheta);
+						// (norm_2(surfaceNormal) * norm_2(l->getUnitVector(point))) ; 
 
-		fr = l->getRed() * surfaceMaterial.getDiffuseRed() * cosTheta;
-		fg = l->getGreen() * surfaceMaterial.getDiffuseGreen() * cosTheta;
-		fb = l->getBlue() * surfaceMaterial.getDiffuseBlue() * cosTheta;
-		//if (fr > 0)	
-			dr += fr;
-		//if (fg > 0)
-			dg += fg;
-		//if (fb > 0)
-			db += fb;
+		//std::cout<<"cosTheta: "<<cosTheta<<std::endl;
+		//std::cout<<"Object: "<<surfaceMaterial.getDiffuseProperties()<<std::endl;
+
+		if (cosTheta > 0) {
+
+			smoothDecimal(cosTheta, COLOR_PERCISION);
+			dr = dr + (l->getRed() * surfaceMaterial.getDiffuseRed() * cosTheta) / COLOR_MAX;
+			dg = dg + (l->getGreen() * surfaceMaterial.getDiffuseGreen() * cosTheta) / COLOR_MAX;
+			db = db + (l->getBlue() * surfaceMaterial.getDiffuseBlue() * cosTheta) / COLOR_MAX;
+			illuminationCountD +=1;
+		}
 	}			
+	//std::cout<<"dr: "<<dr<<" : "<<dr/(illuminationCountD*COLOR_MAX)<<std::endl;
+	//std::cout<<"dg: "<<dg<<" : "<<dg/(illuminationCountD*COLOR_MAX)<<std::endl;
+	//std::cout<<"db: "<<db<<" : "<<db/(illuminationCountD*COLOR_MAX)<<std::endl;
 
 	//Ambient Lighting.
-	float ar = surfaceMaterial.getAmbientRed() * AMB_LIGHT;
-	float ag = surfaceMaterial.getAmbientGreen() * AMB_LIGHT;
-	float ab = surfaceMaterial.getAmbientBlue() * AMB_LIGHT;
-
-	//add lighting.				
-	intensity = LIGHT_FACT * (float(sr + dr + ar) / INT_MAX);
-	pr = (int) COLOR_MAX * intensity;
-	if ( pr > COLOR_MAX)
-		pr = COLOR_MAX;
-
-	intensity = LIGHT_FACT * (float(sg + dg + ag) / INT_MAX);
-	pg = (int) COLOR_MAX * intensity;
-	if (pg > COLOR_MAX)
-		pg = COLOR_MAX;
-
-	intensity = LIGHT_FACT * (float(sb + db + ab) / INT_MAX);
-	pb = (int) COLOR_MAX * intensity;
-	if ( pb > COLOR_MAX)
-		pb = COLOR_MAX;
+	float ar = (surfaceMaterial.getAmbientRed() * AMB_LIGHT ) / COLOR_MAX;
+	float ag = (surfaceMaterial.getAmbientGreen() * AMB_LIGHT / COLOR_MAX);
+	float ab = (surfaceMaterial.getAmbientBlue() * AMB_LIGHT / COLOR_MAX);
+	
+	intensity = (sr+dr+ar) * LIGHT_FACT;
+	pr = std::min(COLOR_MAX, (int) std::floor(COLOR_MAX * intensity));
+	intensity = (sg+dg+ag) * LIGHT_FACT;
+	pg = std::min(COLOR_MAX, (int) std::floor(COLOR_MAX * intensity));
+	intensity = (sb+db+ab) * LIGHT_FACT;
+	pb = std::min(COLOR_MAX, (int) std::floor(COLOR_MAX * intensity));
 
 	//std::cout<<"red: s:"<<sr<<" d:"<<dr<<" i:"<<intensity<<std::endl;
 	//std::cout<<"green: s:"<<sg<<" d:"<<dg<<" i:"<<intensity<<std::endl;
