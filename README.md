@@ -1,7 +1,20 @@
 Ray_Tracer
 ==========
 NOTE:
-Programs runs slow may take approximately 5 minutes to render two 512x512 images
+Programs runs slow!
+
+As of 12/12/2014
+
+Shadows attempted but turned off.  They were blocking all light except ambient.
+
+Refreaction not implemmented.
+
+Still having issues with camera placement.  (most test cases will fail for this reason).
+
+
+
+
+
 
 
 As of 11/16/14 late submission two

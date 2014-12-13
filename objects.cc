@@ -47,6 +47,10 @@ Material::Material(const std::string& n, const ublas::vector<float>& a, const ub
 	ks = s;
 }
 
+std::string Material::getName() {
+	return name;
+}
+
 ublas::vector<float> Material::getAmbientProperties() {
 	return ka;
 }
@@ -229,34 +233,9 @@ int Light::getBlue() {
 	color(BLUE);
 }
 
-Ray::Ray(ublas::vector<float> prp, ublas::vector<float> rayVector, ublas::vector<float> vppc, int x, int y, float a, float b) {
+Ray::Ray(ublas::vector<float> prp, ublas::vector<float> rayVector) {
 	focusWorldCoord = prp;
 	r = rayVector;
-	pixelWorldCoord = vppc;
-	screenX = x;
-	screenY = y;
-	alpha = a;
-	beta = b;
-}
-
-int Ray::getScreenX() {
-	return screenX;
-}
-
-int Ray::getScreenY() {
-	return screenY;
-}
-
-float Ray::getAlpha() {
-	return alpha;
-}
-
-float Ray::getBeta() {
-	return beta;
-}
-
-ublas::vector<float> Ray::getPixelWorldCoord() {
-	return pixelWorldCoord;
 }
 
 ublas::vector<float> Ray::getPRP() {
@@ -578,26 +557,55 @@ void World::addMaterial(std::string n, Material mtl) {
 	materials [n] =  mtl;
 }
 
-Intersection::Intersection(float d, ublas::vector<float> p, ublas::vector<float> n, Material m) {
+Intersection::Intersection(const Intersection& old) {
+	
+	this->depth = old.getDepth();
+	this->point = old.getPoint();
+	this->normal = old.getSurfaceNormal();
+	this->surfaceMaterial = Material(old.getSurfaceMaterial().getName(),
+			old.getSurfaceMaterial().getAmbientProperties(),
+			old.getSurfaceMaterial().getDiffuseProperties(),
+			old.getSurfaceMaterial().getSpecularProperties());
+	this->real = old.isReal();
+}
+
+Intersection::Intersection(const float& d,const ublas::vector<float>& p,const ublas::vector<float>& n,const Material& m,const bool& r) {
 	depth = d;
 	point = p;
 	normal = n;
 	surfaceMaterial = m;
+	real = r;
 }
 
-float Intersection::getDepth() {
+Intersection Intersection::operator=(const Intersection& rhs) {
+	this->depth = rhs.getDepth();
+	this->point = rhs.getPoint();
+	this->normal = rhs.getSurfaceNormal();
+	this->surfaceMaterial = Material(rhs.getSurfaceMaterial().getName(),
+			rhs.getSurfaceMaterial().getAmbientProperties(),
+			rhs.getSurfaceMaterial().getDiffuseProperties(),
+			rhs.getSurfaceMaterial().getSpecularProperties());
+	this->real = rhs.isReal();
+
+	return *this;
+}
+
+float Intersection::getDepth() const{
 	return depth;
 }
 
-ublas::vector<float> Intersection::getPoint() {
+ublas::vector<float> Intersection::getPoint() const{
 	return point;
 }
 
-ublas::vector<float> Intersection::getSurfaceNormal() {
+ublas::vector<float> Intersection::getSurfaceNormal() const {
 	return normal;
 }
 
-Material Intersection::getSurfaceMaterial() {
+Material Intersection::getSurfaceMaterial() const {
 	return surfaceMaterial;
 }
 
+bool Intersection::isReal() const {
+	return real;
+}

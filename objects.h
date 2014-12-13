@@ -39,11 +39,12 @@ namespace ublas = boost::numeric::ublas;
 #define COLOR_VALUES 256
 #define SPHERE true
 #define POLYGON false
+#define FAR_FAR_AWAY 99999.99
 #define AMB_LIGHT 20.0
 #define LIGHT_FACT .00001
-#define EPSILON 0.000001
+#define EPSILON 0.00001
 #define BASE_TEN 10
-#define COLOR_PERCISION 3
+#define COLOR_PERCISION 5
 #define ZERO 0
 #define ZERO_F 0.0
 #define BEGIN 0
@@ -150,25 +151,13 @@ class Light {
 
 class Ray {
 	private:
-	//world Coordinate of the Pixel this ray colors. (L)
-	ublas::vector<float> pixelWorldCoord;
 	//direction vector of the ray;
 	ublas::vector<float> r;
 	//world Coordinate of the PRP or foucas point. (E)	
 	ublas::vector<float> focusWorldCoord;
-	int screenX;
-	int screenY;
-	float alpha;
-	float beta;
 
 	public:
-	Ray(ublas::vector<float>, ublas::vector<float>, ublas::vector<float>, int, int, float, float);
-	int getScreenX();
-	int getScreenY();
-	float getAlpha();
-	float getBeta();
-	//TODO: set world coord should take the vup, and use d, ax, by to calculte world coordinate.
-	ublas::vector<float> getPixelWorldCoord();
+	Ray(ublas::vector<float>, ublas::vector<float>);
 	ublas::vector<float> getPRP();
 	ublas::vector<float> rayVector(); //v = L - E, L is pixel of view plane, E is PRP
 	float norm();// ||v|| = sqrt( (v1)^2 + (v2)^2 +...+(vn)^2 )
@@ -291,13 +280,17 @@ class Intersection {
 	Material surfaceMaterial;
 	ublas::vector<float> point;
 	ublas::vector<float> normal;
+	bool real;
 
 	public:
-	Intersection(float, ublas::vector<float>, ublas::vector<float>, Material);
-	float getDepth();
-	ublas::vector<float> getPoint();
-	ublas::vector<float> getSurfaceNormal();
-	Material getSurfaceMaterial();
+	Intersection(const Intersection&);
+	Intersection(const float&, const ublas::vector<float>&, const ublas::vector<float>&, const Material&, const bool&);
+	Intersection operator=(const Intersection&);
+	float getDepth() const;
+	ublas::vector<float> getPoint() const;
+	ublas::vector<float> getSurfaceNormal() const;
+	Material getSurfaceMaterial() const;
+	bool isReal() const;
 };
 
 #endif  /*define OBJS_H end */

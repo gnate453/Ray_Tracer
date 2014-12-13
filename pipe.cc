@@ -4,6 +4,14 @@ float smoothDecimal(float d, int n) {
 	return (std::floor(d * pow(BASE_TEN, n) + 0.5) / pow(BASE_TEN, n));
 }
 
+ublas::vector<float> smoothColor(ublas::vector<float> c) {
+	c (RED) = std::min(float (COLOR_MAX), c (RED));
+	c (GREEN) = std::min(float (COLOR_MAX), c (GREEN));
+	c (BLUE) = std::min(float (COLOR_MAX), c (BLUE));
+
+	return c;
+}
+
 World worldFromString(std::string d) {
 	
 	World newWorld;
@@ -297,70 +305,29 @@ void castRays(World w) {
 				
 				for (int j = 0; j < sit->getWidth(); ++j)
 				{
-					float x = (2.0/(sit->getWidth()-1))*j - 1;
-					float y = (2.0/(sit->getHeight()-1))*i - 1;
+					float beta = (2.0/(sit->getHeight()-1))*i - 1;
+					float alpha = (2.0/(sit->getWidth()-1))*j - 1;
 					
 					ublas::vector<float> r(VECTOR_3D);
 					ublas::vector<float> pixelWorldCoord (VECTOR_3D);
 
-					r (X) = (-cit->getNearClip() * cit->getVPN()(X)) + (x * camU(X)) + (y * camV(X));
-					r (Y) = (-cit->getNearClip() * cit->getVPN()(Y)) + (x * camU(Y)) + (y * camV(Y));
-					r (Z) = (-cit->getNearClip() * cit->getVPN()(Z)) + (x * camU(Z)) + (y * camV(Z));
-
-					pixelWorldCoord (X) = cit->getPRP() (X) + r (X);
-					pixelWorldCoord (Y) = cit->getPRP() (Y) + r (Y);
-					pixelWorldCoord (Z) = cit->getPRP() (Z) + r (Z);
-					
-					//std::cout<<"Ray: "<<r<<" Pixel: "<<pixelWorldCoord<<std::endl;
+					r (X) = (-cit->getNearClip() * cit->getVPN()(X)) + (alpha * camU(X)) + (beta * camV(X));
+					r (Y) = (-cit->getNearClip() * cit->getVPN()(Y)) + (alpha * camU(Y)) + (beta * camV(Y));
+					r (Z) = (-cit->getNearClip() * cit->getVPN()(Z)) + (alpha * camU(Z)) + (beta * camV(Z));
+	
+					Ray tmpR(cit->getPRP(), r);
 		
-					Ray tmpR(cit->getPRP(), r, pixelWorldCoord, j, i, x, y);
-		
-					if (!spheres.empty() && !polygons.empty()) {
-						Intersection closestSphere = intersectRayWithSpheres(tmpR, spheres, *cit);
-						Intersection closestPolygon = intersectRayWithPolygons(tmpR, polygons, *cit);
-						Intersection* closest;
-						if (closestSphere.getDepth() < closestPolygon.getDepth())
-							closest = &closestSphere;
-						else
-							closest = &closestPolygon;
+					//std::cout<<"\nPixel: "<<j<<", "<<i<<std::endl;
+					ublas::vector<float> color = rayTrace(tmpR, &w, sit->getRecursionDepth(), true); 
 
-						if ( cit->getNearClip() < std::abs(closest->getDepth()) && std::abs(closest->getDepth()) < cit->getFarClip() ) {
-							ublas::vector<int> color;
-							color = calcPixelColor(tmpR, closest->getPoint(), closest->getSurfaceNormal(),
-									 	closest->getSurfaceMaterial(), w.getLights(), cit->getNearClip(), cit->getFarClip());
+					color = smoothColor(color);
 
-							img->setPixelRed(j, i, color(RED));
-							img->setPixelGreen(j, i, color(GREEN));
-							img->setPixelBlue(j, i,  color(BLUE));
-							img->setPixelDepth(j, i, color(ALPHA));
-						}
-					}
-					else if (!spheres.empty() &&  polygons.empty()) {
-						Intersection closest = intersectRayWithSpheres(tmpR, spheres, *cit);
-						if ( cit->getNearClip() < std::abs(closest.getDepth()) && std::abs(closest.getDepth()) < cit->getFarClip() ) {
-							ublas::vector<int> color;
-							color = calcPixelColor(tmpR, closest.getPoint(), closest.getSurfaceNormal(),
-									 	closest.getSurfaceMaterial(), w.getLights(), cit->getNearClip(), cit->getFarClip());
+					//std::cout<<"Final color: "<<color<<std::endl;
 
-							img->setPixelRed(j, i, color(RED));
-							img->setPixelGreen(j, i, color(GREEN));
-							img->setPixelBlue(j, i,  color(BLUE));
-							img->setPixelDepth(j, i, color(ALPHA));
-						}
-					}
-					else if (spheres.empty() &&  !polygons.empty()) {
-						Intersection closest = intersectRayWithPolygons(tmpR, polygons, *cit);
-						if ( cit->getNearClip() < std::abs(closest.getDepth()) && std::abs(closest.getDepth()) < cit->getFarClip() ) {
-							ublas::vector<int> color;
-							color = calcPixelColor(tmpR, closest.getPoint(), closest.getSurfaceNormal(),
-									 	closest.getSurfaceMaterial(), w.getLights(), cit->getNearClip(), cit->getFarClip());
-
-							img->setPixelRed(j, i, color(RED));
-							img->setPixelGreen(j, i, color(GREEN));
-							img->setPixelBlue(j, i,  color(BLUE));
-							img->setPixelDepth(j, i, color(ALPHA));
-						}
-					}
+					img->setPixelRed(j, i, (int) color(RED));
+					img->setPixelGreen(j, i, (int) color(GREEN));
+					img->setPixelBlue(j, i,(int) color(BLUE));
+					img->setPixelDepth(j, i,(int) color(ALPHA));
 
 
 					count += 1;
@@ -382,71 +349,187 @@ void castRays(World w) {
 	std::cout<<"Done!"<<std::endl;
 }
 
-Intersection intersectRayWithSpheres(Ray ray, std::list<Sphere> spheres, Camera c) {
+ublas::vector<float> rayTrace(Ray r, World *w, int depthCounter, bool f) {
+
+	std::list<Light> lights = w->getLights();
+	ublas::vector<float> tracedColor (VECTOR_C);
+	tracedColor (RED) = 0.0;
+	tracedColor (GREEN) = 0.0;
+	tracedColor (BLUE) = 0.0;
+	tracedColor (ALPHA) = 0.0;
+	float cosThetaRay = 0;
+	bool first = f;
+		
+	if (depthCounter >= 0) {
+		//TODO intersect RAY GIVEN (r) with spheres and/or polygons.
+		Intersection* closest = NULL;
+		if (!w->getSpheres().empty() && !w->getPolygons().empty()) {
+			Intersection* closestSphere = intersectRayWithSpheres(r, w->getSpheres());
+			Intersection* closestPolygon = intersectRayWithPolygons(r, w->getPolygons());
+			if (closestSphere != NULL && closestPolygon != NULL) {
+				if (closestSphere->getDepth() < closestPolygon->getDepth()) {
+					closest = closestSphere;
+					delete closestPolygon;
+				}
+				else {
+					closest = closestPolygon;
+					delete closestSphere;
+				}
+			}
+			else if (closestSphere != NULL && closestPolygon == NULL) {
+				closest = closestSphere;
+			}
+			else if (closestSphere == NULL && closestPolygon != NULL) {
+				closest = closestPolygon;
+			}
+		}
+		else if (!w->getSpheres().empty() &&  w->getPolygons().empty()) {
+			Intersection* closestSphere = intersectRayWithSpheres(r, w->getSpheres());
+			closest = closestSphere;
+		}
+		else if (w->getSpheres().empty() &&  !w->getPolygons().empty()) {
+			Intersection* closestPolygon = intersectRayWithPolygons(r, w->getPolygons());
+			closest = closestPolygon;
+		}
+		else
+			return tracedColor;
+		
+		
+		//std::cout<<"Intersection: "<<closest->isReal()<<std::endl;
+		
+		//the given ray intersects with an object.
+		if (closest != NULL) {
+			
+			//std::cout<<"r from: "<<r.getPRP()<<" U: "<<r.unitVector()<<std::endl;
+
+			//calculate reflection of the given ray on closest surface
+			cosThetaRay = inner_prod(r.unitVector(), closest->getSurfaceNormal());
+			ublas::vector<float> R = (2 * cosThetaRay * closest->getSurfaceNormal()) - r.unitVector();			
+			Ray newRay = Ray(closest->getPoint(), R);
+			
+			//std::cout<<"new orgin: "<<closest->getPoint()<<" R: "<<R<<std::endl;
+			//std::cout<<"surface Normal: "<<closest->getSurfaceNormal()<<std::endl;
+
+			//std::cout<<"distance: "<<closest->getDepth()<<std::endl;
+			//std::cout<<"diffuse color: "<<closest->getSurfaceMaterial().getDiffuseProperties()<<std::endl;
+			//std::cout<<"Specular color: "<<closest->getSurfaceMaterial().getSpecularProperties()<<std::endl;
+			
+			//recurse to the next ray.  Then recieve the color of it's specular highlighs
+			tracedColor = rayTrace(newRay, w, depthCounter-1, false);
+			
+			//add your specular high lights.  
+			for (std::list<Light>::iterator	l = lights.begin(); l != lights.end(); ++l) {
+				bool blocked = false;	
+							
+				Ray L(closest->getPoint(), l->getDirectionVector(closest->getPoint()));
+				//std::cout<<"for light in direction: "<<L.rayVector()<<std::endl;
+				
+				if (!w->getSpheres().empty()) {
+ 					Intersection* blocker = intersectRayWithSpheres(L, w->getSpheres());
+					if (blocker != NULL) {
+						blocked = true;
+						//std::cout<<"blocked"<<std::endl;
+						//std::cout<<"this point: "<<closest->getPoint()<<std::endl;
+						//std::cout<<"blocking point"<<blocker->getPoint()<<std::endl;
+						delete blocker;
+					}
+				}
+				if (!blocked && !w->getPolygons().empty()) {
+					Intersection* blocker = intersectRayWithPolygons(L, w->getPolygons());
+					if (blocker != NULL) {
+						blocked = true;
+						delete blocker;
+					}
+				}
+
+				//if (!blocked) {
+					//calculate reflection of L
+					 
+					//std::cout<<"not blocked!!"<<std::endl;
+					float cosThetaDiffuse = inner_prod(closest->getSurfaceNormal(), L.unitVector());
+					float cosThetaLight = inner_prod(L.unitVector(), closest->getSurfaceNormal());
+					ublas::vector<float> H = (2 * cosThetaLight * closest->getSurfaceNormal()) - L.unitVector() ;
+					float cosPhiLight = inner_prod(r.unitVector(), H);
+						
+					//std::cout<<"reflection is H: "<<H<<std::endl;
+
+					if (cosPhiLight <= 0) {
+						tracedColor += calcSpecularColor(closest->getSurfaceMaterial(), l->getColor(), cosPhiLight);
+						
+						//std::cout<<"Added specular color"<<std::endl;
+						//std::cout<<"color: "<<tracedColor<<std::endl;
+					}
+					if (first) {
+						if (cosThetaDiffuse > 0) { 
+							tracedColor += calcDiffuseColor(closest->getSurfaceMaterial(), l->getColor(), cosThetaDiffuse);
+							//std::cout<<"Added Diffuse color, after returned to first hit!"<<std::endl;
+							//std::cout<<"color: "<<tracedColor<<std::endl;
+						}
+					}
+				//}
+			}
+			if (first) {
+				tracedColor += calcAmbientColor(closest->getSurfaceMaterial());
+			}
+
+			delete closest;	 
+		}
+		else {
+			//no intersection so return no color.
+			return tracedColor;
+		}
+	}
+	return tracedColor;
+}
+
+Intersection* intersectRayWithSpheres(Ray ray, std::list<Sphere> spheres) {
 
 	ublas::vector<float> U = ray.unitVector();
-	float closest = c.getFarClip();
-	Intersection closestIntersection = Intersection(closest, ray.paraPos(closest), U, spheres.front().getColor());
-	//std::cout<<ray.getX()<<","<<ray.getY()<<" U: "<<U<<std::endl;
+	float closest = FAR_FAR_AWAY;
+	Intersection* closestIntersection = NULL;
+	//std::cout<<" U: "<<U<<std::endl;
 	for (std::list<Sphere>::iterator s = spheres.begin(); s != spheres.end(); ++s)
 	{
 		float v, csqd, dsqd;
-		//std::cout<<"Object: "<<s->getName()<<" "<<ray.getScreenX()<<" "<<ray.getScreenY()<<std::endl;
-		//std::cout<<"PRP: "<<ray.getPRP()<<std::endl;
-		//std::cout<<"VPN: "<<c.getVPN()<<std::endl;
-		//std::cout<<"pixel coord: "<<ray.getPixelWorldCoord()<<std::endl;
-		//std::cout<<"U: "<<ray.unitVector()<<std::endl;
-		//c squared (sphere origin -camera prp)
 		
-		//std::cout<<" r: "<<s->getRadius()<<" c: "<<s->getDistanceToPixel(ray.getPixelWorldCoord())<<" v: "<<v<<std::endl;
 		v = inner_prod(s->getOrigin() - ray.getPRP(), U);
 		csqd = s->getDistanceToPixel(ray.getPRP()) * s->getDistanceToPixel(ray.getPRP());
 		dsqd = s->getRadiusSquared() - (csqd - (v * v));
 
-		//std::cout<<" r^2: "<<s->getRadiusSquared()<<" c^2: "<<csqd<<" v^2: "<<v*v<<std::endl;
 		if (dsqd > 0) {
 			float d = std::sqrt(dsqd);
 			//std::cout<<"  d^2: "<<dsqd<<" d: "<<d<<"\n"<<std::endl;
 			//normal to sphere
 			ublas::vector<float> S = ray.paraPos(v-d);
-			ublas::vector<float> toNear = S - ray.paraPos(c.getNearClip());			
-			ublas::vector<float> toFar = ray.paraPos(c.getFarClip()) - S;
 
-			if ( c.getNearClip() < std::abs(v-d) && std::abs(v-d) < c.getFarClip() ) { 
+			ublas::vector<float> N = S - s->getOrigin();
+			N = (1/norm_2(N)) * N; 
 				
-				ublas::vector<float> N = S - s->getOrigin();
-				N = (1/norm_2(N)) * N; 
-				
-				//record closest distance interestion with infromation to color pixel.
-				if ((v-d) < closest) {
-					closest = v-d;
-					closestIntersection = Intersection( (v-d), S, N, s->getColor() );
-				}	
-
-			}	//end if in view frustrum		
+			//record closest distance interestion with infromation to color pixel.
+			if ((v-d) < closest) {
+				closest = v-d;
+				closestIntersection = new Intersection( (v-d), S, N, s->getColor(), true);
+				//std::cout<<"In intersect distance: "<<closestIntersection->getDepth()<<std::endl;
+				//std::cout<<"diffuse color: "<<closestIntersection->getSurfaceMaterial().getDiffuseProperties()<<std::endl;
+				//std::cout<<"Specular color: "<<closestIntersection->getSurfaceMaterial().getSpecularProperties()<<std::endl;
+			}	
 		}	//end if intersection possible
 	}	//end for each sphere
 
 	return closestIntersection;
 } 
 
-
-Intersection intersectRayWithPolygons(Ray ray, std::list<Polygon> polygons, Camera c) {
-	//ublas::matrix<float> M (VECTOR_3D, VECTOR_3D);
-	//ublas::matrix<float> Mi (VECTOR_3D, VECTOR_3D);
-	//ublas::matrix<float> Mb (VECTOR_3D, VECTOR_3D);
-	//ublas::matrix<float> Mg (VECTOR_3D, VECTOR_3D);
-	//ublas::matrix<float> Mt (VECTOR_3D, VECTOR_3D);
+Intersection* intersectRayWithPolygons(Ray ray, std::list<Polygon> polygons) {
 	ublas::vector<float> rW = -ray.unitVector();
 	ublas::vector<float> e1;
 	ublas::vector<float> e2;
 	ublas::vector<float> A;
 
-	float closest = c.getFarClip();
-	Intersection closestIntersection = Intersection(closest, ray.paraPos(closest), rW, polygons.front().getColor());
+	float closest = FAR_FAR_AWAY;
+	Intersection* closestIntersection = NULL;
 
 	for	(std::list<Polygon>::iterator p = polygons.begin(); p != polygons.end(); ++p) {
-		float disToClosestFace = c.getFarClip();
+		float disToClosestFace = FAR_FAR_AWAY;
 		std::list<Face> facesInP = p->getFaces();
 		for (std::list<Face>::iterator f = facesInP.begin(); f != facesInP.end(); ++f) {
 			e1  = f->getVertex(P_TWO) - f->getVertex(P_ONE);
@@ -491,104 +574,83 @@ Intersection intersectRayWithPolygons(Ray ray, std::list<Polygon> polygons, Came
 			answer (Z) = (Ci * A(X)) + (Fi * A(Y)) + (Ii * A(Z));
 
 			//std::cout<<"result: "<<result<<"answer: "<<answer<<std::endl;
-
-			if ( answer (Z) > c.getNearClip() && answer (Z) < c.getFarClip()  ) { 
+			float tstar = answer (Z);
 				
-				float tstar = answer (Z);
-				
-				if (tstar < closest){
-					closest = tstar;
-					closestIntersection = Intersection(closest, ray.paraPos(tstar), f->getNormal(), p->getColor());
-				}
-			} //end if intersection
+			if (tstar < closest){
+				closest = tstar;
+				closestIntersection = new Intersection(tstar, ray.paraPos(tstar), f->getNormal(), p->getColor(), true);
+			}
 		} //end for each face
 	} //end for each polygon
 
 	return closestIntersection;
 }
 
-ublas::vector<float> calcPixelColor(Ray ray, ublas::vector<float> point, ublas::vector<float> surfaceNormal, Material surfaceMaterial, std::list<Light> lights, float near, float far) {
+ublas::vector<float> calcSpecularColor(Material k, ublas::vector<float> b, float cosPhi) {
 
-	float intensity;
-	float sr = 0.0;
-	float sg = 0.0;
-	float sb = 0.0;
-	float dr = 0.0;
-	float dg = 0.0;
-	float db = 0.0;
-	unsigned int pr = 0;
-	unsigned int pg = 0;
-	unsigned int pb = 0;
-	int illuminationCountD = 0;
-	int illuminationCountS = 0;
-	for (std::list<Light>::iterator	l = lights.begin(); l != lights.end(); ++l) {
-		
-		//std::cout<<"Light: "<<l->getColor()<<std::endl;
+	ublas::vector<float> color (VECTOR_C);	
+	float phong = pow(cosPhi, k.getSpecularAlpha());
+	//phong = smoothDecimal(phong, COLOR_PERCISION);
+	phong = std::abs(phong);
+	//if (phong < EPSILON && phong > 0)
+	//	phong = EPSILON;
 
-		//Specular lighting.
-		float cosPhi = inner_prod(ray.unitVector(), ((2 * inner_prod(l->getUnitVector(point),
-									 surfaceNormal) * surfaceNormal) - l->getUnitVector(point)));	
+	//std::cout<<"\n Specular calculator: "<<std::endl;
+	//std::cout<<"light color: "<<b<<std::endl;
+	//std::cout<<"Material Spec: "<<k.getSpecularProperties()<<std::endl;
+	//std::cout<<"cosPhi: "<<cosPhi<<std::endl;
+	//std::cout<<"phong: "<<phong<<std::endl;
 
-		if (cosPhi <= 0) {
-			float phong = pow(cosPhi, surfaceMaterial.getSpecularAlpha());
-			smoothDecimal(phong, COLOR_PERCISION);
-			phong = std::abs(phong);
-			sr = sr + (l->getRed() * surfaceMaterial.getSpecularRed() * phong) / COLOR_MAX;
-			sg = sg + (l->getGreen() * surfaceMaterial.getSpecularGreen() * phong) / COLOR_MAX;
-			sb = sb + (l->getBlue() * surfaceMaterial.getSpecularBlue() * phong) / COLOR_MAX;
+	color (RED) = (b (RED) * k.getSpecularRed() * phong);
+	color (GREEN) = (b (GREEN) * k.getSpecularGreen() * phong);
+	color (BLUE) = (b (BLUE) * k.getSpecularBlue() * phong);
 
-			illuminationCountS += 1;
-		}
+	//TODO: Scale by COLOR_MAX?
+	//TODO: ALPHA?
+	color(ALPHA) = 0.0;
 
-		//Diffuse Lighting
-		float cosTheta = inner_prod(surfaceNormal, l->getUnitVector(point)); 
-						// (norm_2(surfaceNormal) * norm_2(l->getUnitVector(point))) ; 
+	//std::cout<<"Specular calculator returning: "<<color<<std::endl;
 
-		//std::cout<<"cosTheta: "<<cosTheta<<std::endl;
-		//std::cout<<"Object: "<<surfaceMaterial.getDiffuseProperties()<<std::endl;
+	return color;
+}
 
-		if (cosTheta > 0) {
+ublas::vector<float> calcDiffuseColor(Material k, ublas::vector<float> b, float cosTheta) {
 
-			smoothDecimal(cosTheta, COLOR_PERCISION);
-			dr = dr + (l->getRed() * surfaceMaterial.getDiffuseRed() * cosTheta) / COLOR_MAX;
-			dg = dg + (l->getGreen() * surfaceMaterial.getDiffuseGreen() * cosTheta) / COLOR_MAX;
-			db = db + (l->getBlue() * surfaceMaterial.getDiffuseBlue() * cosTheta) / COLOR_MAX;
-			illuminationCountD +=1;
-		}
-	}			
-	//std::cout<<"dr: "<<dr<<" : "<<dr/(illuminationCountD*COLOR_MAX)<<std::endl;
-	//std::cout<<"dg: "<<dg<<" : "<<dg/(illuminationCountD*COLOR_MAX)<<std::endl;
-	//std::cout<<"db: "<<db<<" : "<<db/(illuminationCountD*COLOR_MAX)<<std::endl;
-
-	//Ambient Lighting.
-	float ar = (surfaceMaterial.getAmbientRed() * AMB_LIGHT ) / COLOR_MAX;
-	float ag = (surfaceMaterial.getAmbientGreen() * AMB_LIGHT / COLOR_MAX);
-	float ab = (surfaceMaterial.getAmbientBlue() * AMB_LIGHT / COLOR_MAX);
+	ublas::vector<float> color (VECTOR_C);
 	
-	intensity = (sr+dr+ar) * LIGHT_FACT;
-	pr = std::min(COLOR_MAX, (int) std::floor(COLOR_MAX * intensity));
-	intensity = (sg+dg+ag) * LIGHT_FACT;
-	pg = std::min(COLOR_MAX, (int) std::floor(COLOR_MAX * intensity));
-	intensity = (sb+db+ab) * LIGHT_FACT;
-	pb = std::min(COLOR_MAX, (int) std::floor(COLOR_MAX * intensity));
-
-	//std::cout<<"red: s:"<<sr<<" d:"<<dr<<" i:"<<intensity<<std::endl;
-	//std::cout<<"green: s:"<<sg<<" d:"<<dg<<" i:"<<intensity<<std::endl;
-	//std::cout<<"blue: s:"<<sb<<" d:"<<db<<" i:"<<intensity<<std::endl;
-
-	//depth TODO: needs fix?	
-	ublas::vector<float> fc = ray.paraPos(far);	
-	//fc (Z) = -c.getFarClip();
-	float disN = norm_2(point - ray.getPRP());
-	float disF = norm_2(fc - point);
-
-	int pdepth = (int)  COLOR_MAX - std::min( float (COLOR_MAX), (COLOR_MAX) * (disN/(far - near)));
-
-	ublas::vector<int> returnVal(VECTOR_C);
-	returnVal(RED) = pr;
-	returnVal(GREEN) = pg;
-	returnVal(BLUE) = pb;
-	returnVal(ALPHA) = pdepth;
+	//cosTheta = smoothDecimal(cosTheta, COLOR_PERCISION);
 	
-	return returnVal;
+	//std::cout<<"\n Diffuse calculator: "<<std::endl;
+	//std::cout<<"light color: "<<b<<std::endl;
+	//std::cout<<"Material Diff: "<<k.getDiffuseProperties()<<std::endl;
+	//std::cout<<"cosTheta: "<<cosTheta<<std::endl;
+
+	//calc collor
+	color (RED) = (b (RED) * k.getDiffuseRed() * cosTheta);
+	color (GREEN) = (b (GREEN) * k.getDiffuseGreen() * cosTheta);
+	color (BLUE) = (b (BLUE) * k.getDiffuseBlue() * cosTheta);
+
+	//TODO: scale by COLOR_MAX?
+	//TODO: ALPHA?
+	color(ALPHA) = 0.0;
+
+	
+	//std::cout<<"Diffuse calculator returning: "<<color<<std::endl;
+
+	return color;
+}
+
+ublas::vector<float> calcAmbientColor(Material k) {
+	
+	ublas::vector<float> color (VECTOR_C);
+
+	color (RED) = k.getAmbientRed() * AMB_LIGHT; 
+	color (GREEN) = k.getAmbientGreen() * AMB_LIGHT;
+	color (BLUE) = k.getAmbientBlue() * AMB_LIGHT;
+
+	//TODO: scale by COLOR_MAX?
+	//TODO: ALPHA?
+	color(ALPHA) = 0.0;
+
+	return color;
 }

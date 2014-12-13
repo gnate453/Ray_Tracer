@@ -1,9 +1,21 @@
-mtllib m.mtl
+mtllib m2.mtl
 usemtl blue
-s globe1 2 2 -20.0 1.5
-usemtl green
-s globe2 -5 -5 -40.0 2
+s jazz1 -1 1 -1 0.4
+usemtl indigo
+s jazz2 0 1.4 -1 0.4
+usemtl springgreen
+s jazz3 1 1 -1 0.4
 usemtl orange
-s globe3 0 0 -10.0 1
+s jazz4 -1.6 0 -1 0.4
+usemtl white
+s jazz5 0 0 -1 0.4
+usemtl tomato
+s jazz6 1.6 0 -1 0.4
+usemtl lime
+s jazz7 -1 -1 -1 0.4
+usemtl blue
+s jazz8 0 -1.4 -1 0.4
+usemtl raspberry
+s jazz9 1 -1 1 0.4
 
 
