@@ -11,6 +11,8 @@ Refreaction not implemmented.
 
 Still having issues with camera placement.  (most test cases will fail for this reason).
 
+Since I could not fix my problem with camera placement I've included a test file m2.obj m2.mtl and c2, which are nearly the same as scene1 test file provided except spheres have been moved down the -z axis and the camera has been adjusted to capute the spheres.  This is simply to prove reflection is implemented.  
+
 
 
 

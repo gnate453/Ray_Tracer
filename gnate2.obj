@@ -1,0 +1,48 @@
+mtllib gnate.mtl
+
+v 2 -2 3.0
+v -2 -2 3.0
+v -2 0 -200
+v 2 0 -200
+
+usemtl gold
+s guard1 2.0 0 -5 .5
+usemtl darkslategray
+s guard2 -2.0 0 -5 .5
+usemtl gold
+s guard3 2.0 0 -10 .5
+usemtl darkslategray
+s guard4 -2.0 0 -10 .5
+usemtl gold
+s guard5 2.0 0 -20 .5
+usemtl darkslategray
+s guard6 -2.0 0 -20 .5
+usemtl gold
+s guard7 2.0 0 -40 .5
+usemtl darkslategray
+s guard8 -2.0 0 -40 .5
+usemtl darkslategray
+s guard9 2.0 -1 -5 .5
+usemtl gold
+s guard10 -2.0 -1 -5 .5
+usemtl darkslategray
+s guard11 2.0 -1 -10 .5
+usemtl gold
+s guard12 -2.0 -1 -10 .5
+usemtl darkslategray
+s guard13 2.0 -1 -20 .5
+usemtl gold
+s guard14 -2.0 -1 -20 .5
+usemtl darkslategray
+s guard15 2.0 -1 -40 .5
+usemtl gold
+s guard16 -2.0 -1 -40 .5
+
+
+usemtl whiteblue
+s master 0 18 -210 20
+
+usemtl indigo
+g plane
+f 1 2 3 4
+

@@ -132,6 +132,11 @@ World worldFromString(std::string d) {
 			ublas::vector<float> ka (VECTOR_C);
 			ublas::vector<float> kd (VECTOR_C);
 			ublas::vector<float> ks (VECTOR_C);
+			float n1;
+			float tr;
+			float kr;
+			float krf;
+			
 
 			parse>>name;
 
@@ -155,6 +160,19 @@ World worldFromString(std::string d) {
 			std::getline(data, tmp);
 			std::stringstream ph(tmp.substr(LENGTH_2, tmp.length()));
 			ph>>ks(ALPHA);
+			std::getline(data, tmp);
+			std::stringstream _n1(tmp.substr(LENGTH_2, tmp.length()));
+			_n1>>n1;
+			std::getline(data, tmp);
+			std::stringstream _tr(tmp.substr(LENGTH_2, tmp.length()));
+			_tr>>tr;
+			std::getline(data, tmp);
+			std::stringstream _kr(tmp.substr(LENGTH_2, tmp.length()));
+			_kr>>kr;
+			std::getline(data, tmp);
+			std::stringstream _krf(tmp.substr(LENGTH_2, tmp.length()));
+			_krf>>krf;
+			
 			
 			//std::cout<<name<<" "<<ka<<" "<<kd<<" "<<ks<<std::endl; 			
 
@@ -167,7 +185,7 @@ World worldFromString(std::string d) {
 			ks(GREEN) = smoothDecimal(ks(GREEN), COLOR_PERCISION);
 			ks(BLUE) = smoothDecimal(ks(BLUE), COLOR_PERCISION);
 			
-			Material mtl(name, ka, kd, ks);
+			Material mtl(name, ka, kd, ks, n1, tr, kr, krf);
 			newWorld.addMaterial(name, mtl);
 		}
 		//use material
@@ -414,8 +432,9 @@ ublas::vector<float> rayTrace(Ray r, World *w, int depthCounter, bool f) {
 			//std::cout<<"diffuse color: "<<closest->getSurfaceMaterial().getDiffuseProperties()<<std::endl;
 			//std::cout<<"Specular color: "<<closest->getSurfaceMaterial().getSpecularProperties()<<std::endl;
 			
-			//recurse to the next ray.  Then recieve the color of it's specular highlighs
-			tracedColor = rayTrace(newRay, w, depthCounter-1, false);
+			//recurse to the next ray.  Then recieve the color of it's specular highlighs scale by kr;
+			tracedColor = closest->getSurfaceMaterial().getReflectionAtten() 
+								* rayTrace(newRay, w, depthCounter-1, false);
 			
 			//add your specular high lights.  
 			for (std::list<Light>::iterator	l = lights.begin(); l != lights.end(); ++l) {

@@ -33,18 +33,26 @@ Material::Material() {
 	ks = s;	
 }
 
-Material::Material(const std::string& n, const ublas::vector<float>& c) {
+Material::Material(const std::string& n, const ublas::vector<float>& c, const float& _n1, const float& _tr, const float& _kr, const float& _krf) {
 	name = n;
 	ka = c;
 	kd = c;
 	ks = c;
+	n1 = _n1;
+	tr = _tr;
+	kr = _kr;
+	krf = _krf;
 }
 
-Material::Material(const std::string& n, const ublas::vector<float>& a, const ublas::vector<float>& d, const ublas::vector<float>& s) {
+Material::Material(const std::string& n, const ublas::vector<float>& a, const ublas::vector<float>& d, const ublas::vector<float>& s, const float& _n1, const float& _tr, const float& _kr, const float& _krf) {
 	name = n;
 	ka = a;
 	kd = d;
 	ks = s;
+	n1 = _n1;
+	tr = _tr;
+	kr = _kr;
+	krf = _krf;
 }
 
 std::string Material::getName() {
@@ -101,6 +109,22 @@ float Material::getSpecularBlue() {
 
 float Material::getSpecularAlpha() {
 	return ks(ALPHA);
+}
+
+float Material::getRefractionIndex() {
+	return n1;
+}
+
+float Material::getTransparency() {
+	return tr;
+}
+
+float Material::getReflectionAtten() {
+	return kr;
+}
+
+float Material::getRefractionAtten() {
+	return krf;
 }
 
 Face::Face(const ublas::vector<float>& v1, 
@@ -565,7 +589,11 @@ Intersection::Intersection(const Intersection& old) {
 	this->surfaceMaterial = Material(old.getSurfaceMaterial().getName(),
 			old.getSurfaceMaterial().getAmbientProperties(),
 			old.getSurfaceMaterial().getDiffuseProperties(),
-			old.getSurfaceMaterial().getSpecularProperties());
+			old.getSurfaceMaterial().getSpecularProperties(),
+			old.getSurfaceMaterial().getRefractionIndex(),
+			old.getSurfaceMaterial().getTransparency(),
+			old.getSurfaceMaterial().getReflectionAtten(),
+			old.getSurfaceMaterial().getRefractionAtten());
 	this->real = old.isReal();
 }
 
@@ -584,7 +612,11 @@ Intersection Intersection::operator=(const Intersection& rhs) {
 	this->surfaceMaterial = Material(rhs.getSurfaceMaterial().getName(),
 			rhs.getSurfaceMaterial().getAmbientProperties(),
 			rhs.getSurfaceMaterial().getDiffuseProperties(),
-			rhs.getSurfaceMaterial().getSpecularProperties());
+			rhs.getSurfaceMaterial().getSpecularProperties(), 
+			rhs.getSurfaceMaterial().getRefractionIndex(),
+			rhs.getSurfaceMaterial().getTransparency(),
+			rhs.getSurfaceMaterial().getReflectionAtten(),
+			rhs.getSurfaceMaterial().getRefractionAtten());
 	this->real = rhs.isReal();
 
 	return *this;

@@ -3,6 +3,6 @@ c cam01 0 0 10 0 0 1 0 1 0 4 50
 #light sources
 l 10 10 20 1 0 120 0
 l -10 10 20 1 0 0 125
-l 0 0 20 1 100 0 0
+l 0 0 20 1 110 0 0
 #ray cast command
 r spheres_01 1600 900 3

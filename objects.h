@@ -60,14 +60,18 @@ ublas::vector<float> crossProductVectors(ublas::vector<float> v1, ublas::vector<
 class Material {
 	private:
 	std::string name;
-	ublas::vector<float> ka;
-	ublas::vector<float> kd;
-	ublas::vector<float> ks;
+	ublas::vector<float> ka;  //ambient properties
+	ublas::vector<float> kd;  //diffuse properties
+	ublas::vector<float> ks;  //specular properties
+	float n1;  //refractive index
+	float tr;  //transparency. 
+	float kr;  //reflection attenuation
+	float krf; //refraction attenuation   
 
 	public:
 	Material();
-	Material(const std::string&, const ublas::vector<float>&);
-	Material(const std::string&, const ublas::vector<float>&, const ublas::vector<float>&, const ublas::vector<float>&);
+	Material(const std::string&, const ublas::vector<float>&, const float&, const float&, const float&, const float&);
+	Material(const std::string&, const ublas::vector<float>&, const ublas::vector<float>&, const ublas::vector<float>&, const float&, const float&, const float&, const float&);
 	std::string getName();
 	ublas::vector<float> getAmbientProperties();
 	float getAmbientRed();
@@ -82,6 +86,10 @@ class Material {
 	float getSpecularGreen();
 	float getSpecularBlue();
 	float getSpecularAlpha();
+	float getRefractionIndex();
+	float getTransparency();
+	float getReflectionAtten();
+	float getRefractionAtten();
 };
 
 class Face {

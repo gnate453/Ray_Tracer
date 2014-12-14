@@ -52,10 +52,7 @@ std::string readInputFiles(char** argv) {
 	while (std::getline(mtlFile, tmp))
 	{
 		std::string check = tmp.substr(BEGIN, LENGTH_2);
-		if ( check.compare("n1") != 0 &&
-			 check.compare("Tr") != 0 &&
-			 check.compare("Kr") != 0 &&
-			 *(check.begin()) != '#')		
+		if (*(check.begin()) != '#')		
 			materials += tmp + "\n";
 	}
 	mtlFile.close();
